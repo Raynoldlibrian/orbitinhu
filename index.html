@@ -25,7 +25,7 @@
      jangan diubah karena dipakai di ratusan tempat lain di CSS ini. */
   :root{
     --navy-deep:#081B33; /* #061712*/
-    --navy-mid:#0F2D4F; /*#0b3126*/
+    --navy-mid:#0F2D4F; /* #0b3126*/
     --glass-fill:rgba(255,255,255,.08);
     --glass-fill-strong:rgba(255,255,255,.13);
     --glass-border:rgba(255,255,255,.20);
@@ -440,7 +440,7 @@
      coba "1fr 3fr", dst. --s1-gap = jarak antar kolom (angka px). */
   .section1-grid{
     --s1-gap: 120px; /* <-- ubah angka ini aja buat lebarin/sempitin jarak 2 kolom */
-    display:grid; grid-template-columns:1fr 1fr; gap:var(--s1-gap); align-items:start; position:relative;
+    display:grid; grid-template-columns:1fr 1fr; gap:var(--s1-gap); align-items:stretch; position:relative;
   }
   .section1-grid::before{
     /* catatan: posisi garis pemisah ini dihitung berdasar rasio 1fr:2fr di atas.
@@ -484,7 +484,7 @@
 
   /* ===== KOLOM KANAN: judul kalender + (kalender kecil + agenda) di bawahnya ===== */
   .kalagenda-col{display:flex; flex-direction:column;}
-  .kalagenda-row{display:grid; grid-template-columns:0.85fr 1.15fr; gap:28px; align-items:start;}
+  .kalagenda-row{display:grid; grid-template-columns:0.85fr 1.15fr; gap:28px; align-items:stretch; flex:1 1 auto;}
   .cal-bare .cal-day{font-size:.72rem;}
   .cal-bare .cal-head h3{font-size:.86rem;}
 
@@ -512,7 +512,13 @@
   .cal-legend span{display:inline-flex; align-items:center; gap:5px;}
   .cal-legend i{width:8px; height:8px; border-radius:50%; display:inline-block;}
 
-  .agenda-scroll{display:flex; flex-direction:column; gap:10px; max-height:360px; overflow-y:auto; padding-right:4px;}
+  .agenda-bare{display:flex; flex-direction:column; min-height:0;}
+  .agenda-scroll{
+    display:flex; flex-direction:column; gap:10px; overflow-y:auto; padding-right:4px;
+    flex:1; min-height:0; /* otomatis ngisi setinggi kolom kiri (Layanan Kinerja); kalau isinya
+       kepanjangan, baru scroll di dalam kotak ini. ✏️ Mau kasih batas atas biar nggak kepanjangan
+       banget di layar gede? tambahin misalnya "max-height:600px;" di baris ini. */
+  }
   .agenda-scroll::-webkit-scrollbar{width:5px;}
   .agenda-scroll::-webkit-scrollbar-thumb{background:var(--glass-border); border-radius:10px;}
   .event-card{
@@ -798,14 +804,14 @@
     </div>
     <div class="footer-divider">
       <!-- ✏️ AMAN DIUBAH SENDIRI: ganti "images/lebah-pair_baru.png" kalau nama/lokasi filenya beda -->
-      <img src="images/batas.png" alt="" class="footer-ornament">
+      <img src="images/batas.png.png" alt="" class="footer-ornament">
     </div>
-    <!--<div class="footer-block">
+    <div class="footer-block">
       <div class="fb-title">Foto dokumentasi</div>
       Bagian Protokol dan Komunikasi Pimpinan<br>
       Sekretariat Daerah Kabupaten Indragiri Hulu<br>
       Jl. Lintas Timur Sumatera, Pematang Reba, Rengat Barat
-    </div> -->
+    </div>
   </div>
   <div class="footer-bottom">Raynold — Bagian Organisasi Setda Kabupaten Indragiri Hulu — 2026</div>
 </footer>
@@ -1561,6 +1567,37 @@
         docInput.focus();
       }
     });
+  })();
+
+  /* ===== SYNC TINGGI AGENDA — bikin kotak agenda (#agendaScroll) persis setinggi sisa
+     ruang kolom kanan (setelah dikurangi judul "Kalender Upacara"), supaya bagian bawahnya
+     rata sama kolom kiri (Layanan Kinerja). Kalau agenda kepanjangan, baru scroll internal. */
+  (function syncAgendaHeight(){
+    const leftCol = document.querySelector('.layanan-col');
+    const kalagendaCol = document.querySelector('.kalagenda-col');
+    const kalenderHead = document.querySelector('.kalender-head');
+    const agendaScroll = document.getElementById('agendaScroll');
+    if (!leftCol || !kalagendaCol || !kalenderHead || !agendaScroll) return;
+
+    function apply(){
+      if (window.innerWidth <= 960) { agendaScroll.style.maxHeight = 'none'; return; } // di HP: kolom ditumpuk, biarin natural
+      agendaScroll.style.maxHeight = 'none'; // reset dulu biar pengukuran leftCol nggak kepengaruh sisa nilai lama
+      const leftH = leftCol.getBoundingClientRect().height;
+      const headH = kalenderHead.getBoundingClientRect().height;
+      const colGap = parseFloat(getComputedStyle(kalagendaCol).rowGap) || 0;
+      const available = leftH - headH - colGap;
+      agendaScroll.style.maxHeight = Math.max(160, available) + 'px';
+    }
+
+    apply();
+    window.addEventListener('load', apply); // jaga-jaga kalau ada reflow telat (font, dsb)
+    let resizeT;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeT);
+      resizeT = setTimeout(apply, 150);
+    });
+    // agenda diisi async (JSONP) — ukur ulang beberapa saat setelah datanya kemungkinan sudah masuk
+    setTimeout(apply, 1200);
   })();
 </script>
 
