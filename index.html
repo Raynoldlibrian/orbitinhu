@@ -24,8 +24,8 @@
      Ganti kode warnanya aja (hex/rgba), nama variabel (--navy-deep dkk)
      jangan diubah karena dipakai di ratusan tempat lain di CSS ini. */
   :root{
-    --navy-deep:#081B33; /*#081B33 #061712 */
-    --navy-mid:#0F2D4F; /* #0b3126 */
+    --navy-deep:#081B33; /* #061712*/
+    --navy-mid:#0F2D4F; /*#0b3126*/
     --glass-fill:rgba(255,255,255,.08);
     --glass-fill-strong:rgba(255,255,255,.13);
     --glass-border:rgba(255,255,255,.20);
@@ -346,7 +346,7 @@
   .footer-divider{
     /* ✏️ AMAN DIUBAH SENDIRI: --footer-ornament-opacity mengatur transparansi ornamen,
        --footer-ornament-h mengatur tinggi maksimalnya. */
-    --footer-ornament-opacity:0.3; --footer-ornament-h:100px;
+    --footer-ornament-opacity:0.4; --footer-ornament-h:170px;
     display:flex; align-items:center; justify-content:center; align-self:stretch;
   }
   .footer-ornament{
@@ -462,6 +462,16 @@
     border-radius:16px; padding:14px; transition:transform .15s ease, background .15s ease, border-color .15s ease;
   }
   .layanan-card:hover{transform:translateY(-2px); background:var(--glass-fill-strong); border-color:var(--gold-soft);}
+  /* efek kilau saat card ini "ditemukan" lewat search bar hero */
+  .layanan-card.search-hit{
+    border-color:var(--gold-soft);
+    box-shadow:0 0 0 3px rgba(216,175,82,.35), 0 10px 30px rgba(0,0,0,.35);
+    animation:searchHitPulse 1.6s ease;
+  }
+  @keyframes searchHitPulse{
+    0%{background:var(--glass-fill-strong);}
+    100%{background:var(--glass-fill);}
+  }
   .layanan-icon{
     width:42px; height:42px; border-radius:12px; flex-shrink:0; overflow:hidden;
     background:var(--glass-fill); border:1px solid var(--glass-border);
@@ -563,8 +573,8 @@
       <h1>Satu pintu<br>layanan kinerja</h1>
       <p class="tagline">Melayani pelaporan SAKIP, menjawab tindak lanjut evaluasi SAKIP — dan registri SOP, galeri peraturan serta informasi capaaian kinerja Kabupaten Indragiri Hulu</p>
 
-      <form class="search-shell" role="search" onsubmit="return false;">
-        <input type="text" placeholder="Cari layanan, dokumen, atau informasi…" aria-label="Cari layanan">
+      <form class="search-shell" role="search" id="heroSearchForm">
+        <input type="text" placeholder="Cari layanan, dokumen, atau informasi…" aria-label="Cari layanan" id="heroSearchInput">
         <button class="search-btn" type="submit" aria-label="Cari">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.4" y2="16.4"/></svg>
         </button>
@@ -797,7 +807,7 @@
       Jl. Lintas Timur Sumatera, Pematang Reba, Rengat Barat
     </div> -->
   </div>
-  <div class="footer-bottom">&copy Raynold — 2026</div>
+  <div class="footer-bottom">Raynold — Bagian Organisasi Setda Kabupaten Indragiri Hulu — 2026</div>
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js"></script>
@@ -1510,6 +1520,46 @@
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) { clearInterval(timer); }
       else { timer = setInterval(slideNext, 4200); }
+    });
+  })();
+
+  /* ===== HERO SEARCH — dulu cuma dekorasi (onsubmit="return false"), sekarang beneran jalan.
+     Alur: 1) coba cocokkan ke nama/deskripsi salah satu app di "Layanan Kinerja" (kalau ketemu,
+     scroll ke situ + kasih efek kilau). 2) kalau nggak ketemu, lempar ke kolom pencarian dokumen
+     yang sudah ada (#docSearch) sekalian auto-filter. */
+  (function initHeroSearch(){
+    const form = document.getElementById('heroSearchForm');
+    const input = document.getElementById('heroSearchInput');
+    if (!form || !input) return;
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const q = input.value.trim();
+      if (!q) return;
+      const qLower = q.toLowerCase();
+
+      const cards = Array.from(document.querySelectorAll('.layanan-card'));
+      const match = cards.find(card => {
+        const name = (card.querySelector('.layanan-name')?.textContent || '').toLowerCase();
+        const desc = (card.querySelector('.layanan-desc')?.textContent || '').toLowerCase();
+        return name.includes(qLower) || desc.includes(qLower);
+      });
+
+      if (match) {
+        match.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        match.classList.remove('search-hit');
+        void match.offsetWidth; // reset biar animasinya bisa diulang tiap search
+        match.classList.add('search-hit');
+        return;
+      }
+
+      const docInput = document.getElementById('docSearch');
+      if (docInput) {
+        docInput.value = q;
+        docInput.dispatchEvent(new Event('input'));
+        docInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        docInput.focus();
+      }
     });
   })();
 </script>
