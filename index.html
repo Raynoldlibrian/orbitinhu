@@ -554,6 +554,91 @@
     .section-kalender .ornamen-atas, .section-kalender .ornamen-bawah{display:none;}
     .section-galeri .ornamen-atas, .section-galeri .ornamen-bawah{display:none;}
   }
+
+  /* ===== SECTION: STANDAR PELAYANAN =====
+     ✏️ AMAN DIUBAH SENDIRI: data layanan ada di JS (STANDAR_DATA), cari
+     komentar "STANDAR PELAYANAN — DATA" di bagian <script> bawah. */
+  .section-standar{background:var(--navy-deep); padding:80px 40px 90px; position:relative;}
+  .section-standar::before{content:''; position:absolute; inset:0 0 auto 0; height:1px; background:linear-gradient(90deg, transparent, var(--glass-border), transparent);}
+  .standar-wrap{max-width:1180px; margin:0 auto; position:relative; z-index:1;}
+  .standar-head{margin-bottom:36px;}
+  .standar-head h2{font-family:var(--font-display); font-weight:800; font-size:clamp(1.6rem, 2.4vw, 2.2rem); line-height:1.1;}
+  .standar-head p{color:var(--muted); font-size:.88rem; margin-top:8px; max-width:560px;}
+
+  .standar-bidang{margin-bottom:34px;}
+  .standar-bidang:last-child{margin-bottom:0;}
+  .standar-bidang-title{
+    display:flex; align-items:center; gap:10px; font-family:var(--font-display); font-weight:700;
+    font-size:1.05rem; color:var(--gold-soft); margin-bottom:16px;
+  }
+  .standar-bidang-title .num{
+    display:flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%;
+    background:var(--glass-fill); border:1px solid var(--glass-border); font-family:var(--font-body);
+    font-size:.72rem; font-weight:700; color:var(--ivory); flex-shrink:0;
+  }
+  .standar-grid{display:grid; grid-template-columns:repeat(5, 1fr); gap:14px;}
+  .standar-card{
+    display:flex; flex-direction:column; gap:10px; text-align:left; cursor:pointer;
+    background:var(--glass-fill); border:1px solid var(--glass-border); border-radius:16px;
+    padding:16px 16px 14px; backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    transition:transform .15s ease, background .15s ease, border-color .15s ease;
+    font-family:inherit; color:inherit;
+  }
+  .standar-card:hover{transform:translateY(-4px); background:var(--glass-fill-strong); border-color:var(--gold-soft);}
+  .standar-card-icon{width:30px; height:30px; border-radius:9px; background:var(--glass-fill-strong); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .standar-card-icon svg{width:16px; height:16px; stroke:var(--gold-soft);}
+  .standar-card-title{
+    font-size:.86rem; color:var(--ivory); font-weight:600; line-height:1.35; flex:1;
+    display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
+  }
+  .standar-card-meta{display:flex; align-items:center; gap:6px; font-size:.68rem; color:var(--muted); font-weight:600;}
+  .standar-card-meta svg{width:12px; height:12px; stroke:currentColor; flex-shrink:0;}
+
+  /* Modal detail */
+  .standar-modal-overlay{
+    position:fixed; inset:0; z-index:100; background:rgba(4,10,20,.72); backdrop-filter:blur(4px);
+    display:flex; align-items:center; justify-content:center; padding:24px;
+    opacity:0; pointer-events:none; transition:opacity .2s ease;
+  }
+  .standar-modal-overlay.open{opacity:1; pointer-events:auto;}
+  .standar-modal{
+    width:100%; max-width:620px; max-height:86vh; overflow-y:auto; position:relative;
+    background:var(--navy-mid); border:1px solid var(--glass-border); border-radius:20px;
+    padding:32px 30px 28px; box-shadow:0 30px 70px rgba(0,0,0,.5);
+    transform:translateY(16px) scale(.98); transition:transform .2s ease;
+  }
+  .standar-modal-overlay.open .standar-modal{transform:translateY(0) scale(1);}
+  .standar-modal-close{
+    position:absolute; top:16px; right:16px; width:32px; height:32px; border-radius:50%;
+    background:var(--glass-fill); border:1px solid var(--glass-border); color:var(--ivory);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .standar-modal-close:hover{background:var(--glass-fill-strong); border-color:var(--gold-soft);}
+  .standar-modal-close svg{width:15px; height:15px;}
+  .standar-modal-eyebrow{font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; color:var(--gold-soft); margin-bottom:8px;}
+  .standar-modal-title{font-family:var(--font-display); font-weight:800; font-size:1.3rem; line-height:1.25; margin-bottom:18px; padding-right:32px;}
+  .standar-modal-section{margin-bottom:16px;}
+  .standar-modal-section:last-child{margin-bottom:0;}
+  .standar-modal-section h4{font-size:.74rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--gold-soft); margin-bottom:7px;}
+  .standar-modal-section ol, .standar-modal-section ul{margin:0; padding-left:18px; color:var(--ivory); font-size:.86rem; line-height:1.6;}
+  .standar-modal-section p{margin:0; color:var(--ivory); font-size:.86rem; line-height:1.6;}
+  .standar-modal-meta-row{display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px;}
+  .standar-modal-meta-item{
+    flex:1; min-width:140px; background:var(--glass-fill); border:1px solid var(--glass-border);
+    border-radius:12px; padding:10px 14px;
+  }
+  .standar-modal-meta-item .lbl{font-size:.64rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin-bottom:3px;}
+  .standar-modal-meta-item .val{font-size:.82rem; color:var(--ivory); font-weight:600;}
+  .standar-modal-footer{margin-top:20px; padding-top:16px; border-top:1px solid var(--glass-border); font-size:.78rem; color:var(--muted); line-height:1.6;}
+  .standar-modal-footer a{color:var(--gold-soft); text-decoration:none;}
+  .standar-modal-footer a:hover{text-decoration:underline;}
+
+  @media (max-width:1040px){ .standar-grid{grid-template-columns:repeat(3, 1fr);} }
+  @media (max-width:760px){ .standar-grid{grid-template-columns:repeat(2, 1fr);} }
+  @media (max-width:480px){ .standar-grid{grid-template-columns:1fr;} }
+  @media (max-width:860px){
+    .section-standar{padding:56px 24px;}
+  }
 </style>
 </head>
 <body>
@@ -715,6 +800,60 @@
     </div>
   </div>
 </section>
+
+<!-- ===== SECTION: STANDAR PELAYANAN =====
+     ✏️ AMAN DIUBAH SENDIRI: teks eyebrow/judul/paragraf di bawah ini. Isi
+     tiap layanan (persyaratan, prosedur, dst) ada di JS — cari komentar
+     "STANDAR PELAYANAN — DATA" di bagian <script> paling bawah file ini. -->
+<section class="section-standar" id="standar">
+  <div class="standar-wrap">
+    <div class="standar-head">
+      <div class="eyebrow">Pelayanan Bagian Organisasi</div>
+      <h2>Standar Pelayanan</h2>
+      <p>Persyaratan, prosedur, waktu, dan produk dari setiap layanan Bagian Organisasi Sekretariat Daerah Kabupaten Indragiri Hulu. Klik kartu untuk melihat detail.</p>
+    </div>
+    <div id="standarBidangList"><!-- di-generate otomatis dari STANDAR_DATA --></div>
+  </div>
+</section>
+
+<!-- Modal detail Standar Pelayanan -->
+<div class="standar-modal-overlay" id="standarModalOverlay">
+  <div class="standar-modal" id="standarModal" role="dialog" aria-modal="true">
+    <button class="standar-modal-close" id="standarModalClose" aria-label="Tutup">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="standar-modal-eyebrow" id="standarModalBidang"></div>
+    <div class="standar-modal-title" id="standarModalTitle"></div>
+
+    <div class="standar-modal-meta-row">
+      <div class="standar-modal-meta-item">
+        <div class="lbl">Waktu Penyelesaian</div>
+        <div class="val" id="standarModalWaktu"></div>
+      </div>
+      <div class="standar-modal-meta-item">
+        <div class="lbl">Biaya/Tarif</div>
+        <div class="val" id="standarModalBiaya"></div>
+      </div>
+    </div>
+
+    <div class="standar-modal-section">
+      <h4>Persyaratan</h4>
+      <ol id="standarModalPersyaratan"></ol>
+    </div>
+    <div class="standar-modal-section">
+      <h4>Sistem, Mekanisme dan Prosedur</h4>
+      <ol id="standarModalProsedur"></ol>
+    </div>
+    <div class="standar-modal-section">
+      <h4>Produk Layanan</h4>
+      <p id="standarModalProduk"></p>
+    </div>
+
+    <div class="standar-modal-footer">
+      Pengaduan, saran dan masukan dapat disampaikan secara tertulis melalui surat yang ditujukan kepada Bagian Organisasi Sekretariat Daerah Kabupaten Indragiri Hulu, Jl. Lintas Timur Pematang Reba Kecamatan Rengat Barat, atau email <a href="mailto:organisasi.setdainhu@gmail.com">organisasi.setdainhu@gmail.com</a>.
+    </div>
+  </div>
+</div>
 
 <!-- ===== SECTION NILAI: gabungan SAKIP, RB, IPP, IKM ===== -->
 <section class="section-nilai" id="nilai">
@@ -1607,6 +1746,231 @@
     });
     // agenda diisi async (JSONP) — ukur ulang beberapa saat setelah datanya kemungkinan sudah masuk
     setTimeout(apply, 1200);
+  })();
+
+  /* ===== STANDAR PELAYANAN — DATA =====
+     ✏️ AMAN DIUBAH SENDIRI: tambah/ubah/hapus layanan di array STANDAR_DATA
+     di bawah ini. "bidang" menentukan pengelompokan sub-heading (urutan
+     tampil ikut urutan BIDANG_ORDER). Semua field ditulis manual (bukan
+     dari Google Sheet), sesuai keputusan sebelumnya. */
+  const BIDANG_ORDER = ['Kelembagaan', 'Pelayanan Publik', 'Reformasi Birokrasi'];
+
+  const STANDAR_DATA = [
+    {
+      bidang: 'Kelembagaan',
+      title: 'Pelayanan Konsultasi',
+      waktu: '1 (satu) hari kerja setiap jam kerja',
+      biaya: 'Tidak dipungut biaya/gratis',
+      persyaratan: [
+        'Surat permohonan tertulis atau mengkonfirmasikan kedatangan melalui media elektronik.',
+        'Dokumen, data dan bahan pendukung yang akan dikonsultasikan.'
+      ],
+      prosedur: [
+        'Pengguna layanan mengirimkan surat perihal konsultasi atau menghubungi pejabat terkait langsung.',
+        'Pengguna layanan datang dan diarahkan kepada petugas yang ditunjuk untuk melaksanakan layanan konsultasi.',
+        'Pelaksanaan konsultasi.'
+      ],
+      produk: 'Saran, masukan, pertimbangan, solusi dan rekomendasi terhadap permasalahan yang dikonsultasikan.'
+    },
+    {
+      bidang: 'Kelembagaan',
+      title: 'Pelayanan Penyediaan Narasumber',
+      waktu: '2 (dua) hari sejak surat didisposisi oleh Kepala Bagian Organisasi',
+      biaya: 'Tidak dipungut biaya/gratis',
+      persyaratan: [
+        'Surat resmi perihal permintaan asistensi/bimbingan teknis dari instansi/organisasi yang menjelaskan materi (term of reference), tempat dan waktu pelaksanaan kegiatan.'
+      ],
+      prosedur: [
+        'Pengguna layanan menyampaikan surat resmi permintaan asistensi yang menjelaskan materi, waktu dan tempat pelaksanaan.',
+        'Informasi disampaikan kepada pengguna layanan melalui surat resmi, telepon, atau surat elektronik (email) permintaan penyediaan narasumber.'
+      ],
+      produk: 'Asistensi disertai dengan penunjukan/penugasan narasumber yang akan menyampaikan materi paparan atau makalah.'
+    },
+    {
+      bidang: 'Kelembagaan',
+      title: 'Pelayanan Proses Penetapan Peraturan Daerah tentang Nomenklatur Perangkat Daerah',
+      waktu: 'Maksimal 15 (lima belas) hari kerja sejak dokumen diterima lengkap',
+      biaya: 'Tidak dipungut biaya/gratis',
+      persyaratan: [
+        'Surat permohonan fasilitasi kepada Bagian Organisasi.',
+        'Data pendukung Kajian Teknis/Naskah Akademis masing-masing 1 rangkap.'
+      ],
+      prosedur: [
+        'Perangkat Daerah mengajukan surat permohonan usulan perubahan nomenklatur.',
+        'Membuat draf Peraturan Daerah/Peraturan Bupati.',
+        'Melaksanakan rapat koordinasi kepada instansi terkait.',
+        'Melaksanakan harmonisasi ke Bagian Hukum/Biro Organisasi, pembahasan Peraturan Daerah dan Peraturan Bupati yang telah diperbaiki dari usulan Perangkat Daerah.',
+        'Peraturan Daerah dan Peraturan Bupati yang sudah disahkan dan diundangkan didistribusikan kepada Perangkat Daerah terkait.'
+      ],
+      produk: 'Produk hukum perubahan nomenklatur Perangkat Daerah.'
+    },
+    {
+      bidang: 'Kelembagaan',
+      title: 'Pelayanan Proses Penetapan Peraturan Bupati Susunan Organisasi dan Tata Kerja Perangkat Daerah (Perubahan SOTK)',
+      waktu: 'Maksimal 15 (lima belas) hari kerja sejak dokumen diterima lengkap',
+      biaya: 'Tidak dipungut biaya/gratis',
+      persyaratan: [
+        'Surat asli resmi permintaan perubahan nomenklatur Perangkat Daerah dan Unit Pelaksana Teknis Dinas.',
+        'Data pendukung Kajian Teknis/Naskah Akademis masing-masing 1 rangkap.'
+      ],
+      prosedur: [
+        'Perangkat Daerah mengajukan surat permohonan usulan perubahan SOTK.',
+        'Melaksanakan rapat koordinasi kepada instansi terkait.',
+        'Melaksanakan harmonisasi ke Bagian Hukum/Bagian Organisasi, pembahasan Peraturan Bupati yang telah diperbaiki dari usulan Perangkat Daerah.',
+        'Perkada yang sudah disahkan dan diundangkan didistribusikan kepada Perangkat Daerah terkait.'
+      ],
+      produk: 'Produk hukum perubahan SOTK Perangkat Daerah.'
+    },
+    {
+      bidang: 'Kelembagaan',
+      title: 'Pelayanan Penyusunan Analisis Jabatan, Analisis Beban Kerja, Peta Jabatan, dan Evaluasi Jabatan',
+      waktu: 'Maksimal 15 (lima belas) hari kerja sejak dokumen diterima lengkap',
+      biaya: 'Tidak dipungut biaya/gratis',
+      persyaratan: [
+        'Surat pengantar asli dan justifikasi penambahan jabatan dari setiap Perangkat Daerah.',
+        'Data Peta Jabatan dan Peraturan Bupati tentang Uraian Tugas.',
+        'Dokumen Analisis Jabatan dan Dokumen Penghitungan Analisis Beban Kerja.'
+      ],
+      prosedur: [
+        'Perangkat Daerah mengajukan surat permintaan revisi Peta Jabatan dengan melampirkan konsep peta jabatan dan nama jabatan baru sesuai kebutuhan yang berpedoman pada uraian tugas, setelah ada pemberitahuan revisi peta jabatan dari Bagian Organisasi.',
+        'Bagian Organisasi mengundang Perangkat Daerah untuk klarifikasi dan pembahasan analisis jabatan serta perhitungan analisis beban kerja sesuai uraian tugas dan kebutuhan; hasil pembahasan dilaporkan kepada Kepala Bagian.',
+        'Kepala Bagian Organisasi mendisposisi pembuatan surat jawaban persetujuan (disetujui atau tidak) atas draf usulan perubahan Peta Jabatan.',
+        'Surat jawaban disampaikan kepada kepala Perangkat Daerah yang mengusulkan; hasil pembahasan disepakati bersama.'
+      ],
+      produk: 'Rekomendasi usulan revisi Peta Jabatan.'
+    },
+    {
+      bidang: 'Pelayanan Publik',
+      title: 'Pelayanan Fasilitasi Standar Operasional Prosedur (SOP) Perangkat Daerah',
+      waktu: '30 (tiga puluh) hari kerja',
+      biaya: 'Tidak dipungut biaya/gratis',
+      persyaratan: [
+        'Draf SOP usulan dari Perangkat Daerah masing-masing.',
+        'Tupoksi Perangkat Daerah masing-masing.',
+        'Penetapan SOP tahun lalu.'
+      ],
+      prosedur: [
+        'Perangkat Daerah menyampaikan surat permohonan pelaksanaan asistensi SOP.',
+        'Bagian Organisasi menyampaikan surat balasan persetujuan.',
+        'Pelaksanaan asistensi penyusunan SOP.'
+      ],
+      produk: 'Draf Standar Operasional Prosedur (SOP) Perangkat Daerah.'
+    },
+    {
+      bidang: 'Pelayanan Publik',
+      title: 'Pelayanan Fasilitasi Penyusunan Standar Pelayanan',
+      waktu: '1 (satu) hari kerja setiap jam kerja',
+      biaya: 'Tidak dipungut biaya/gratis',
+      persyaratan: [
+        'Surat usulan dari Perangkat Daerah.',
+        'Tupoksi Perangkat Daerah/Unit Pelayanan Publik.',
+        'Pedoman Standar Pelayanan dan/atau draf Standar Pelayanan.'
+      ],
+      prosedur: [
+        'Perangkat Daerah menyampaikan surat permohonan fasilitasi.',
+        'Perangkat Daerah menerima konfirmasi pelaksanaan kegiatan dari Bagian Organisasi.',
+        'Pelaksanaan fasilitasi dan pembahasan draf Standar Pelayanan.'
+      ],
+      produk: 'Draf Standar Pelayanan Perangkat Daerah.'
+    },
+    {
+      bidang: 'Reformasi Birokrasi',
+      title: 'Pelayanan Fasilitasi Asistensi Penyusunan LKjIP Perangkat Daerah',
+      waktu: '2 (dua) bulan setelah Tahun Anggaran sebelumnya berakhir',
+      biaya: 'Tidak dipungut biaya/gratis',
+      persyaratan: [
+        'Renstra Perangkat Daerah.',
+        'Dokumen Pelaksanaan Renja.',
+        'Perjanjian Kinerja.',
+        'Indikator Kinerja Utama.',
+        'DPA.',
+        'Data Capaian Kinerja.',
+        'Realisasi Anggaran.'
+      ],
+      prosedur: [
+        'Perangkat Daerah mengajukan surat permohonan pendampingan penyusunan LKjIP yang ditujukan kepada Sekretaris Daerah Kabupaten Indragiri Hulu c.q. Kepala Bagian Organisasi Sekretariat Daerah Kabupaten Indragiri Hulu.',
+        'Pelaksana menyampaikan surat dan jadwal pendampingan.',
+        'Melaksanakan pendampingan penyusunan LKjIP.'
+      ],
+      produk: 'Draf LKjIP.'
+    },
+    {
+      bidang: 'Reformasi Birokrasi',
+      title: 'Pelayanan Fasilitasi Pelaksanaan Kesekretariatan Tim Reformasi Birokrasi',
+      waktu: 'Laporan 2 (dua) bulan setelah Tahun Anggaran sebelumnya berakhir; fasilitasi setiap jam kerja (08.00–16.00 WIB)',
+      biaya: 'Tidak dipungut biaya/gratis',
+      persyaratan: [
+        'Usulan nama Tim Reformasi Birokrasi Perangkat Daerah di lingkungan Pemerintah Kabupaten Indragiri Hulu.',
+        'Agenda kerja/kegiatan.'
+      ],
+      prosedur: [
+        'Rapat pembentukan Tim Reformasi Birokrasi Kabupaten Indragiri Hulu.',
+        'Mengatur jadwal rapat/pertemuan dengan Kelompok Kerja.',
+        'Memfasilitasi pelaksanaan rapat/pertemuan/konsultasi.',
+        'Membuat notulen hasil rapat/pertemuan/konsultasi.',
+        'Mendokumentasikan hasil kegiatan Tim Reformasi Birokrasi.',
+        'Memfasilitasi laporan hasil kegiatan Tim Reformasi Birokrasi.'
+      ],
+      produk: 'Laporan fasilitasi pelaksanaan kesekretariatan Tim Reformasi Birokrasi Pemerintah Daerah Kabupaten Indragiri Hulu.'
+    }
+  ];
+
+  (function initStandarPelayanan(){
+    const listEl = document.getElementById('standarBidangList');
+    const overlay = document.getElementById('standarModalOverlay');
+    if (!listEl || !overlay) return;
+
+    const cardIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>`;
+    const clockIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>`;
+
+    // render kartu, dikelompokkan per bidang sesuai BIDANG_ORDER
+    BIDANG_ORDER.forEach((bidang, bIdx) => {
+      const items = STANDAR_DATA.filter(d => d.bidang === bidang);
+      if (!items.length) return;
+
+      const block = document.createElement('div');
+      block.className = 'standar-bidang';
+      block.innerHTML = `
+        <div class="standar-bidang-title"><span class="num">${bIdx + 1}</span>Bidang ${bidang}</div>
+        <div class="standar-grid"></div>
+      `;
+      const grid = block.querySelector('.standar-grid');
+
+      items.forEach(item => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'standar-card';
+        card.innerHTML = `
+          <div class="standar-card-icon">${cardIconSVG}</div>
+          <div class="standar-card-title">${item.title}</div>
+          <div class="standar-card-meta">${clockIconSVG}${item.waktu}</div>
+        `;
+        card.addEventListener('click', () => openStandarModal(item, bidang));
+        grid.appendChild(card);
+      });
+
+      listEl.appendChild(block);
+    });
+
+    function openStandarModal(item, bidang){
+      document.getElementById('standarModalBidang').textContent = 'Bidang ' + bidang;
+      document.getElementById('standarModalTitle').textContent = item.title;
+      document.getElementById('standarModalWaktu').textContent = item.waktu;
+      document.getElementById('standarModalBiaya').textContent = item.biaya;
+      document.getElementById('standarModalPersyaratan').innerHTML = item.persyaratan.map(p => `<li>${p}</li>`).join('');
+      document.getElementById('standarModalProsedur').innerHTML = item.prosedur.map(p => `<li>${p}</li>`).join('');
+      document.getElementById('standarModalProduk').textContent = item.produk;
+      overlay.classList.add('open');
+      document.getElementById('standarModal').scrollTop = 0;
+      document.body.style.overflow = 'hidden';
+    }
+    function closeStandarModal(){
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+    document.getElementById('standarModalClose').addEventListener('click', closeStandarModal);
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeStandarModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeStandarModal(); });
   })();
 </script>
 
