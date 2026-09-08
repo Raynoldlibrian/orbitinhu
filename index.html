@@ -340,9 +340,14 @@
   /* ===== FOOTER ===== */
   .site-footer{background:var(--navy-deep); padding:48px 40px 28px; position:relative;}
   .site-footer::before{content:''; position:absolute; inset:0 0 auto 0; height:1px; background:linear-gradient(90deg, transparent, var(--glass-border), transparent);}
-  .footer-wrap{max-width:1180px; margin:0 auto; display:grid; grid-template-columns:1fr auto 1fr; gap:32px; align-items:start;}
+  .footer-wrap{max-width:1180px; margin:0 auto; display:grid; grid-template-columns:1fr auto 1fr; gap:32px; align-items:center;}
   .footer-block{font-size:.82rem; line-height:1.8; color:var(--muted);}
   .footer-block .fb-title{color:var(--ivory); font-weight:700; font-family:var(--font-display); font-size:.98rem; margin-bottom:4px;}
+  /* ✏️ AMAN DIUBAH SENDIRI: blok kontak di sisi kanan footer (rata kanan) */
+  .footer-contact{text-align:right;}
+  .footer-email{display:inline-flex; align-items:center; justify-content:flex-end; gap:7px; color:var(--muted); transition:color .2s ease;}
+  .footer-email:hover{color:var(--gold-soft);}
+  .footer-email svg{width:14px; height:14px; flex-shrink:0; stroke:currentColor;}
   .footer-divider{
     /* ✏️ AMAN DIUBAH SENDIRI: --footer-ornament-opacity mengatur transparansi ornamen,
        --footer-ornament-h mengatur tinggi maksimalnya. */
@@ -359,6 +364,8 @@
     .footer-wrap{grid-template-columns:1fr; gap:12px;}
     .footer-divider{--footer-ornament-h:90px; height:auto; padding:6px 0;}
     .site-footer{padding:40px 24px 24px;}
+    .footer-contact{text-align:center;}
+    .footer-email{justify-content:center;}
   }
 
   /* ===== GALERI PERATURAN: carousel + card dengan cover ===== */
@@ -806,12 +813,14 @@
       <!-- ✏️ AMAN DIUBAH SENDIRI: ganti "images/lebah-pair_baru.png" kalau nama/lokasi filenya beda -->
       <img src="images/batas.png" alt="" class="footer-ornament">
     </div>
-    <!--<div class="footer-block">
-    <div class="fb-title">Foto dokumentasi</div>
-      Bagian Protokol dan Komunikasi Pimpinan<br>
-      Sekretariat Daerah Kabupaten Indragiri Hulu<br>
-      Jl. Lintas Timur Sumatera, Pematang Reba, Rengat Barat
-    </div>-->
+    <!-- ✏️ AMAN DIUBAH SENDIRI: nama kontributor & link email bisa diganti/ditambah di sini -->
+    <div class="footer-block footer-contact">
+      <div class="fb-title">Kontak</div>
+      <a href="mailto:organisasi.setdainhu@gmail.com" class="footer-email">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 6-10 7L2 6"></path></svg>
+        organisasi.setdainhu@gmail.com
+      </a>
+    </div>
   </div>
   <div class="footer-bottom">&copy Raynold — 2026</div>
 </footer>
