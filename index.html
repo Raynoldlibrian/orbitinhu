@@ -41,12 +41,17 @@
   a{color:inherit; text-decoration:none;}
 
   /* ===== BACKGROUND CAROUSEL (placeholder — ganti 4 foto asli) ===== */
-  .hero{position:relative; min-height:100vh; display:flex; flex-direction:column; isolation:isolate;}
+  .hero{
+    position:relative; min-height:100vh; display:flex; flex-direction:column; isolation:isolate;
+    /* ✏️ dipindah ke sini (dari .hero-bg-track-window) biar .hero-content juga bisa
+       pakai variabel ini untuk menyejajarkan garis bawah konten dengan garis bawah icon. */
+    --hero-icon-size:clamp(200px, 26vw, 380px);
+  }
   /* ===== HERO BACKGROUND — icon 3 aplikasi discale besar, didorong bergantian
      dari kanan ke kiri layar penuh (menggantikan foto carousel yang lama).
      ✏️ AMAN DIUBAH SENDIRI: --hero-icon-size (ukuran icon) & --hero-cycle (jeda ganti, detik). */
   .hero-bg-track-window{
-    --hero-icon-size:clamp(200px, 26vw, 380px); --hero-cycle:4.2s;
+    --hero-cycle:4.2s;
     position:absolute; inset:0; z-index:-2; overflow:hidden;
   }
   .hero-bg-track{position:absolute; top:0; left:0; height:100%; display:flex; will-change:transform;}
@@ -116,7 +121,13 @@
      icon besar di background, dan semua section di bawahnya. */
   .hero-content{
     flex:1; position:relative; z-index:3;
-    padding:20px 40px 56px;
+    display:flex; flex-direction:column; justify-content:flex-end;
+    padding:20px 40px;
+    /* ✏️ AMAN DIUBAH SENDIRI: jarak ini dihitung otomatis biar garis bawah blok
+       konten (bawah tombol-tombol) sejajar persis sama garis bawah icon besar
+       di background — bukan angka tetap. Kalau mau kasih jarak ekstra, ubah
+       "20px" di akhir baris (jangan hapus rumus calc-nya). */
+    padding-bottom:calc((100vh - var(--hero-icon-size)) / 2 + 20px);
   }
   .hero-content-wrap{
     display:grid; grid-template-columns:1fr; gap:48px; align-items:center;
@@ -144,6 +155,22 @@
   .search-shell input::placeholder{color:var(--muted);}
   .search-btn{display:flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:50%; border:none; cursor:pointer; background:linear-gradient(135deg, var(--gold-soft), var(--gold)); color:var(--navy-deep); flex-shrink:0;}
   .search-btn svg{width:15px; height:15px;}
+
+  /* ===== TOMBOL LINK CEPAT DI BAWAH SEARCH BAR =====
+     ✏️ AMAN DIUBAH SENDIRI: teks, href, dan urutan tombol ada di HTML dekat
+     form pencarian hero. Style-nya sengaja disamakan sama .search-shell
+     (glass pill) biar terasa satu keluarga visual. */
+  .hero-quicklinks{display:flex; flex-wrap:wrap; gap:12px; margin-bottom:6px;}
+  .hero-quicklink{
+    display:inline-flex; align-items:center; gap:9px;
+    background:var(--glass-fill); border:1px solid var(--glass-border);
+    backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+    border-radius:999px; padding:11px 20px; font-size:.85rem; font-weight:600; color:var(--ivory);
+    box-shadow:0 8px 30px rgba(0,0,0,.25);
+    transition:border-color .2s ease, background .2s ease, transform .15s ease;
+  }
+  .hero-quicklink:hover{border-color:var(--gold-soft); background:var(--glass-fill-strong); transform:translateY(-2px);}
+  .hero-quicklink svg{width:13px; height:13px; flex-shrink:0; stroke:var(--gold-soft);}
 
   /* ===== APP ROW (di bawah search bar) ===== */
   .app-row{position:relative; display:flex; gap:14px; max-width:460px;}
@@ -694,6 +721,19 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.4" y2="16.4"/></svg>
         </button>
       </form>
+
+      <!-- ✏️ AMAN DIUBAH SENDIRI: 2 tombol link cepat ini. "Peta Jabatan" masih
+           href="#" karena aplikasinya belum live — ganti begitu link-nya ada. -->
+      <div class="hero-quicklinks">
+        <a class="hero-quicklink" href="https://pedomantnd.vercel.app" target="_blank" rel="noopener">
+          Panduan Tata Naskah Dinas
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+        <a class="hero-quicklink" href="#" target="_blank" rel="noopener">
+          Peta Jabatan
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+      </div>
 
       <div class="app-track-window">
       <div class="app-track" id="appTrack">
