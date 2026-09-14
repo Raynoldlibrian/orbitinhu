@@ -105,12 +105,12 @@
   .topbar{padding:24px 40px; position:relative; z-index:3;}
   .topbar-wrap{display:flex; align-items:center; gap:14px; max-width:1180px; margin:0 auto; width:100%;}
   .logo-mark{
-    width:46px; height:56px; flex-shrink:0;
+    width:36px; height:46px; flex-shrink:0; /*width:46px; height:56px; flex-shrink:0; */
     display:flex; align-items:center; justify-content:center;
   }
   .logo-mark img{width:100%; height:100%; object-fit:contain;}
   .title-stack{line-height:1.28;}
-  .title-stack .l1{font-family:var(--font-display); font-weight:700; font-size:1.15rem; letter-spacing:.01em;}
+  .title-stack .l1{font-family:var(--font-display); font-weight:700; font-size:1.8rem; letter-spacing:.01em;}
   .title-stack .l1 span{color:var(--gold);}
   .title-stack .l2{font-size:.72rem; letter-spacing:.05em; text-transform:uppercase; color:var(--muted);}
 
@@ -127,7 +127,7 @@
        konten (bawah tombol-tombol) sejajar persis sama garis bawah icon besar
        di background — bukan angka tetap. Kalau mau kasih jarak ekstra, ubah
        "20px" di akhir baris (jangan hapus rumus calc-nya). */
-    padding-bottom:calc((100vh - var(--hero-icon-size)) / 2 + 20px);
+    padding-bottom:calc((100vh - var(--hero-icon-size)) / 2.52 + 20px); /* var(--hero-icon-size)) /2 + 20px */
   }
   .hero-content-wrap{
     display:grid; grid-template-columns:1fr; gap:48px; align-items:center;
@@ -144,7 +144,7 @@
 
   /* ===== SEARCH ===== */
   .search-shell{
-    width:100%; max-width:460px; display:flex; align-items:center; gap:10px;
+    width:100%; max-width:520px; display:flex; align-items:center; gap:10px; /*460px*/
     background:var(--glass-fill); border:1px solid var(--glass-border);
     backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
     border-radius:999px; padding:7px 7px 7px 20px; box-shadow:0 8px 30px rgba(0,0,0,.25);
