@@ -114,6 +114,7 @@
   .hero-stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
   .col-left{text-align:left;}
   .col-right{width:100%;}
+  .hero-opd-search-wrap{position:relative; margin:22px 0 18px; max-width:420px;}
   .stat-value.is-positive{color:var(--status-positive);}
   .stat-value.is-negative{color:var(--status-negative);}
   .eyebrow{font-size:.7rem; letter-spacing:.2em; text-transform:uppercase; color:var(--gold-soft); margin-bottom:12px;}
@@ -383,6 +384,38 @@
   .opd-suggest-item{padding:11px 20px; font-size:.88rem; color:var(--ivory); cursor:pointer;}
   .opd-suggest-item:hover, .opd-suggest-item.is-active{background:var(--glass-fill);}
   .opd-suggest-empty{padding:11px 20px; font-size:.85rem; color:var(--muted);}
+
+  .opd-filter-wrap{max-width:560px; margin:0 auto 8px;}
+  .filter-row{display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:10px; margin-top:14px;}
+  .chip-toggle{margin-left:4px;}
+  .chip-toggle.active{background:linear-gradient(135deg, var(--status-negative), #C0483A); color:#fff;}
+  .opd-active-bar{
+    margin-top:18px; text-align:center; font-size:.85rem; color:var(--muted);
+    display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;
+  }
+  .opd-active-bar strong{color:var(--ivory);}
+  .opd-active-bar button{
+    font-family:var(--font-body); font-size:.76rem; color:var(--muted); background:none;
+    border:1px solid var(--glass-border); border-radius:999px; padding:5px 12px; cursor:pointer;
+    transition:all .15s ease;
+  }
+  .opd-active-bar button:hover{color:var(--ivory); border-color:var(--gold-soft);}
+
+  .opd-multi-result{margin-top:36px;}
+  .opd-multi-meta{text-align:center; color:var(--muted); font-size:.85rem; margin-bottom:20px;}
+  .opd-multi-list{display:flex; flex-direction:column; gap:12px;}
+  .opd-multi-card{border:1px solid var(--glass-border); border-radius:16px; background:var(--glass-fill); overflow:hidden;}
+  .opd-multi-head{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:14px 20px; cursor:pointer; transition:background .2s ease;
+  }
+  .opd-multi-head:hover{background:var(--glass-fill-strong);}
+  .opd-multi-name{font-weight:700; color:var(--ivory); font-size:.92rem;}
+  .opd-multi-meta-line{font-size:.74rem; color:var(--muted); margin-top:2px;}
+  .opd-multi-chevron svg{width:16px; height:16px; stroke:var(--muted); transition:transform .2s ease;}
+  .opd-multi-card.is-open .opd-multi-chevron svg{transform:rotate(180deg);}
+  .opd-multi-body{max-height:0; overflow:hidden; transition:max-height .3s ease;}
+  .opd-multi-card.is-open .opd-multi-body{max-height:3000px;}
 
   .opd-empty-state{text-align:center; color:var(--muted); font-size:.9rem; margin-top:28px;}
 
@@ -688,9 +721,21 @@
     <div class="hero-content-wrap">
     <div class="col-left">
       <!-- ✏️ AMAN DIUBAH SENDIRI: eyebrow, judul <h1>, dan tagline hero. -->
-      <div class="eyebrow">PUSAT LAYANAN DIGITAL</div>
-      <h1>Dashboard<br>Peta Jabatan</h1>
+      <div class="eyebrow">Bagian Organisasi</div>
+      <h1>Peta<br>Jabatan</h1>
       <p class="tagline">Peta seluruh jabatan di lingkungan Pemerintah Kabupaten Indragiri Hulu — bezetting vs kebutuhan per OPD.</p>
+
+      <!-- ✏️ Search-as-you-type pilih OPD. Ketik lalu pilih dari saran →
+           otomatis scroll ke section di bawah & tampilkan detail OPD itu. -->
+      <div class="hero-opd-search-wrap">
+        <form class="search-shell" role="search" id="heroOpdForm" onsubmit="return false;">
+          <input type="text" id="heroOpdInput" placeholder="Cari perangkat daerah…" aria-label="Cari perangkat daerah" autocomplete="off">
+          <button class="search-btn" type="submit" aria-label="Cari" tabindex="-1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.4" y2="16.4"/></svg>
+          </button>
+        </form>
+        <div class="opd-suggest-list" id="heroOpdSuggestList" hidden></div>
+      </div>
 
       <!-- ✏️ AMAN DIUBAH SENDIRI: tombol link cepat balik ke ORBIT. -->
       <div class="hero-quicklinks">
@@ -747,15 +792,31 @@
       <p class="section-tagline">pilih perangkat daerah untuk mendapatkan informasi peta jabatan</p>
     </div>
 
-    <div class="opd-search-wrap">
-      <input type="text" id="opdSearchInput" placeholder="Cari nama perangkat daerah…" aria-label="Cari perangkat daerah" autocomplete="off">
-      <div class="opd-suggest-list" id="opdSuggestList" hidden></div>
+    <div class="opd-filter-wrap">
+      <div class="opd-search-wrap">
+        <input type="text" id="jabatanFilterInput" placeholder="Cari nama jabatan…" aria-label="Cari jabatan" autocomplete="off">
+      </div>
+      <div class="filter-row">
+        <div class="chip-row" id="jenisChipRow">
+          <button class="chip active" type="button" data-jenis="semua">Semua</button>
+          <button class="chip" type="button" data-jenis="struktural">Struktural</button>
+          <button class="chip" type="button" data-jenis="fungsional">Fungsional</button>
+          <button class="chip" type="button" data-jenis="pelaksana">Pelaksana</button>
+        </div>
+        <button class="chip chip-toggle" type="button" id="gapOnlyToggle">Hanya kekurangan (-)</button>
+      </div>
+      <!-- ✏️ Tampil hanya di Mode B (OPD aktif terpilih dari hero) -->
+      <div class="opd-active-bar" id="opdActiveBar" hidden>
+        Menampilkan: <strong id="opdActiveName"></strong>
+        <button type="button" id="opdActiveReset">× ganti / cari OPD lain</button>
+      </div>
     </div>
 
     <div class="opd-empty-state" id="opdEmptyState">
-      Ketik nama OPD di atas untuk melihat peta jabatannya.
+      Ketik nama perangkat daerah di kotak pencarian pada hero di atas, atau cari langsung nama jabatan di sini untuk melihat hasilnya di semua OPD.
     </div>
 
+    <!-- MODE B: satu OPD aktif — statcard + drilldown Sub Unit → Jabatan -->
     <div class="opd-result" id="opdResult" hidden>
       <h3 class="opd-name" id="opdName"></h3>
 
@@ -779,6 +840,12 @@
       </div>
 
       <div class="opd-jabatan-list" id="opdJabatanList"></div>
+    </div>
+
+    <!-- MODE A: belum ada OPD aktif, cari jabatan lintas semua OPD, dikelompokkan per card OPD -->
+    <div class="opd-multi-result" id="opdMultiResult" hidden>
+      <div class="opd-multi-meta" id="opdMultiMeta"></div>
+      <div class="opd-multi-list" id="opdMultiList"></div>
     </div>
   </div>
 </section>
@@ -1058,13 +1125,19 @@ async function loadData(){
     }
     if (elMeta) elMeta.textContent = meta;
   }
-
   /* ============================================================
-     SECTION: PETA JABATAN PERANGKAT DAERAH — search-as-you-type OPD
-     + statcard OPD + card list jabatan drilldown (Sub Unit → Jabatan).
-     Pakai data yang sama (PJ_DATA), tidak fetch ulang.
+     SECTION: PETA JABATAN PERANGKAT DAERAH
+     - Hero (#heroOpdInput): search-as-you-type OPD -> pilih 1 OPD (Mode B)
+     - Section filter (#jabatanFilterInput + chip jenis + toggle gap):
+         Mode A (belum ada OPD aktif): cari lintas semua OPD, hasil
+           dikelompokkan per-card OPD (flat list jabatan per card).
+         Mode B (OPD aktif dari hero): filter di dalam OPD itu saja,
+           tetap drilldown per Sub Unit Kerja seperti sebelumnya.
+     Semua pakai data yang sama (PJ_DATA), tidak fetch ulang.
      ============================================================ */
   let PJ_DATA = [];
+  let selectedOpd = null;
+  const filterState = { text: '', jenis: 'semua', gapOnly: false };
 
   function eselonClass(eselon){
     if (eselon === 'II.a' || eselon === 'II.b') return 'e2';
@@ -1080,8 +1153,27 @@ async function loadData(){
     return units.sort((a,b)=> a.localeCompare(b));
   }
 
-  function renderSuggestList(query){
-    const list = document.getElementById('opdSuggestList');
+  function matchesFilter(row){
+    if (filterState.text && !row.jabatan.toLowerCase().includes(filterState.text)) return false;
+    if (filterState.jenis !== 'semua' && !(row.jenis || '').toLowerCase().includes(filterState.jenis)) return false;
+    if (filterState.gapOnly && !(row.sel < 0)) return false;
+    return true;
+  }
+
+  function jabatanRowHtml(it){
+    return `
+        <div class="jabatan-row">
+          <div class="jabatan-name">${escapeHtml(it.jabatan)}</div>
+          <span class="eselon-badge ${eselonClass(it.eselon)}">${escapeHtml(it.eselon)}</span>
+          <span class="jabatan-bk">B:${it.b}</span>
+          <span class="jabatan-bk">K:${it.k}</span>
+          <span class="jabatan-gap ${it.sel < 0 ? 'is-negative' : 'is-positive'}">${it.sel > 0 ? '+' : ''}${it.sel}</span>
+        </div>`;
+  }
+
+  /* ===== Hero: search-as-you-type OPD ===== */
+  function renderHeroSuggest(query){
+    const list = document.getElementById('heroOpdSuggestList');
     const q = query.trim().toLowerCase();
     if (!q){ list.hidden = true; list.innerHTML = ''; return; }
     const matches = getUnitList().filter(u => u.toLowerCase().includes(q)).slice(0, 12);
@@ -1093,29 +1185,80 @@ async function loadData(){
     list.innerHTML = matches.map(u => `<div class="opd-suggest-item" data-unit="${escapeHtml(u)}">${escapeHtml(u)}</div>`).join('');
     list.hidden = false;
     list.querySelectorAll('.opd-suggest-item').forEach(el => {
-      el.addEventListener('click', () => selectOpd(el.getAttribute('data-unit')));
+      el.addEventListener('click', () => {
+        document.getElementById('heroOpdInput').value = el.getAttribute('data-unit');
+        list.hidden = true;
+        selectOpd(el.getAttribute('data-unit'));
+      });
     });
   }
 
   function selectOpd(unitName){
-    const input = document.getElementById('opdSearchInput');
-    const list = document.getElementById('opdSuggestList');
-    input.value = unitName;
-    list.hidden = true;
-    renderOpdResult(unitName);
+    selectedOpd = unitName;
+    const target = document.getElementById('peta-jabatan-opd');
+    if (target) target.scrollIntoView({behavior:'smooth', block:'start'});
+    renderResults();
   }
 
-  function renderOpdResult(unitName){
-    const rows = PJ_DATA.filter(d => d.unit === unitName);
-    document.getElementById('opdEmptyState').hidden = true;
-    const resultEl = document.getElementById('opdResult');
-    resultEl.hidden = false;
-    document.getElementById('opdName').textContent = unitName;
+  function initHeroOpdSearch(){
+    const input = document.getElementById('heroOpdInput');
+    if (!input) return;
+    input.addEventListener('input', () => renderHeroSuggest(input.value));
+    input.addEventListener('focus', () => { if (input.value.trim()) renderHeroSuggest(input.value); });
+    document.addEventListener('click', (e) => {
+      const wrap = input.closest('.hero-opd-search-wrap');
+      if (wrap && !wrap.contains(e.target)) document.getElementById('heroOpdSuggestList').hidden = true;
+    });
+  }
+
+  /* ===== Section: filter controls ===== */
+  function initFilterControls(){
+    const textInput = document.getElementById('jabatanFilterInput');
+    const chipRow = document.getElementById('jenisChipRow');
+    const gapToggle = document.getElementById('gapOnlyToggle');
+    const resetBtn = document.getElementById('opdActiveReset');
+
+    if (textInput){
+      textInput.addEventListener('input', () => {
+        filterState.text = textInput.value.trim().toLowerCase();
+        renderResults();
+      });
+    }
+    if (chipRow){
+      chipRow.querySelectorAll('.chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          chipRow.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+          filterState.jenis = chip.getAttribute('data-jenis');
+          renderResults();
+        });
+      });
+    }
+    if (gapToggle){
+      gapToggle.addEventListener('click', () => {
+        filterState.gapOnly = !filterState.gapOnly;
+        gapToggle.classList.toggle('active', filterState.gapOnly);
+        renderResults();
+      });
+    }
+    if (resetBtn){
+      resetBtn.addEventListener('click', () => {
+        selectedOpd = null;
+        document.getElementById('heroOpdInput').value = '';
+        renderResults();
+      });
+    }
+  }
+
+  /* ===== Mode B: render satu OPD aktif (statcard + drilldown Sub Unit) ===== */
+  function renderModeB(){
+    const allRows = PJ_DATA.filter(d => d.unit === selectedOpd);
+    document.getElementById('opdName').textContent = selectedOpd;
 
     let totalB = 0, totalK = 0;
-    rows.forEach(r => { totalB += (r.b || 0); totalK += (r.k || 0); });
+    allRows.forEach(r => { totalB += (r.b || 0); totalK += (r.k || 0); });
     const gap = totalB - totalK;
-    document.getElementById('opdStatJabatan').textContent = rows.length.toLocaleString('id-ID');
+    document.getElementById('opdStatJabatan').textContent = allRows.length.toLocaleString('id-ID');
     document.getElementById('opdStatB').textContent = totalB.toLocaleString('id-ID');
     document.getElementById('opdStatK').textContent = totalK.toLocaleString('id-ID');
     const gapEl = document.getElementById('opdStatGap');
@@ -1123,30 +1266,26 @@ async function loadData(){
     gapEl.classList.remove('is-positive','is-negative');
     gapEl.classList.add(gap < 0 ? 'is-negative' : 'is-positive');
 
-    // Group by sub unit kerja, preserving first-seen order
+    const filteredRows = allRows.filter(matchesFilter);
     const subOrder = [];
     const subMap = {};
-    rows.forEach(r => {
+    filteredRows.forEach(r => {
       if (!subMap[r.sub]){ subMap[r.sub] = []; subOrder.push(r.sub); }
       subMap[r.sub].push(r);
     });
 
     const listEl = document.getElementById('opdJabatanList');
-    listEl.innerHTML = subOrder.map((subName, i) => {
-      const items = subMap[subName];
-      let subB = 0, subK = 0;
-      items.forEach(it => { subB += (it.b||0); subK += (it.k||0); });
-      const subGap = subB - subK;
-      const rowsHtml = items.map(it => `
-        <div class="jabatan-row">
-          <div class="jabatan-name">${escapeHtml(it.jabatan)}</div>
-          <span class="eselon-badge ${eselonClass(it.eselon)}">${escapeHtml(it.eselon)}</span>
-          <span class="jabatan-bk">B:${it.b}</span>
-          <span class="jabatan-bk">K:${it.k}</span>
-          <span class="jabatan-gap ${it.sel < 0 ? 'is-negative' : 'is-positive'}">${it.sel > 0 ? '+' : ''}${it.sel}</span>
-        </div>`).join('');
-      return `
-        <div class="opd-sub-card" data-idx="${i}">
+    if (!subOrder.length){
+      listEl.innerHTML = '<div class="opd-empty-state">Tidak ada jabatan yang cocok dengan filter ini di OPD tersebut.</div>';
+    } else {
+      listEl.innerHTML = subOrder.map((subName, i) => {
+        const items = subMap[subName];
+        let subB = 0, subK = 0;
+        items.forEach(it => { subB += (it.b||0); subK += (it.k||0); });
+        const subGap = subB - subK;
+        const rowsHtml = items.map(jabatanRowHtml).join('');
+        return `
+        <div class="opd-sub-card is-open" data-idx="${i}">
           <div class="opd-sub-head">
             <div>
               <div class="opd-sub-name">${escapeHtml(subName)}</div>
@@ -1156,22 +1295,81 @@ async function loadData(){
           </div>
           <div class="opd-sub-body">${rowsHtml}</div>
         </div>`;
-    }).join('');
+      }).join('');
+      listEl.querySelectorAll('.opd-sub-card').forEach(card => {
+        card.querySelector('.opd-sub-head').addEventListener('click', () => card.classList.toggle('is-open'));
+      });
+    }
 
-    listEl.querySelectorAll('.opd-sub-card').forEach(card => {
-      card.querySelector('.opd-sub-head').addEventListener('click', () => card.classList.toggle('is-open'));
-    });
+    document.getElementById('opdActiveBar').hidden = false;
+    document.getElementById('opdActiveName').textContent = selectedOpd;
+    document.getElementById('opdResult').hidden = false;
+    document.getElementById('opdMultiResult').hidden = true;
+    document.getElementById('opdEmptyState').hidden = true;
   }
 
-  function initOpdSearch(){
-    const input = document.getElementById('opdSearchInput');
-    if (!input) return;
-    input.addEventListener('input', () => renderSuggestList(input.value));
-    input.addEventListener('focus', () => { if (input.value.trim()) renderSuggestList(input.value); });
-    document.addEventListener('click', (e) => {
-      const wrap = document.getElementById('opdSearchInput').closest('.opd-search-wrap');
-      if (wrap && !wrap.contains(e.target)) document.getElementById('opdSuggestList').hidden = true;
+  /* ===== Mode A: belum ada OPD aktif, cari jabatan lintas semua OPD ===== */
+  function renderModeA(){
+    const hasQuery = !!(filterState.text || filterState.jenis !== 'semua' || filterState.gapOnly);
+    document.getElementById('opdActiveBar').hidden = true;
+    document.getElementById('opdResult').hidden = true;
+
+    if (!hasQuery){
+      document.getElementById('opdMultiResult').hidden = true;
+      document.getElementById('opdEmptyState').hidden = false;
+      return;
+    }
+    document.getElementById('opdEmptyState').hidden = true;
+
+    const matches = PJ_DATA.filter(matchesFilter);
+    const unitOrder = [];
+    const unitMap = {};
+    matches.forEach(r => {
+      if (!unitMap[r.unit]){ unitMap[r.unit] = []; unitOrder.push(r.unit); }
+      unitMap[r.unit].push(r);
     });
+
+    const multiResult = document.getElementById('opdMultiResult');
+    const metaEl = document.getElementById('opdMultiMeta');
+    const listEl = document.getElementById('opdMultiList');
+
+    if (!unitOrder.length){
+      metaEl.textContent = 'Tidak ada jabatan yang cocok dengan pencarian/filter ini.';
+      listEl.innerHTML = '';
+      multiResult.hidden = false;
+      return;
+    }
+
+    metaEl.textContent = `${matches.length} jabatan cocok, tersebar di ${unitOrder.length} perangkat daerah.`;
+    listEl.innerHTML = unitOrder.map((unitName, i) => {
+      const items = unitMap[unitName];
+      let uB = 0, uK = 0;
+      items.forEach(it => { uB += (it.b||0); uK += (it.k||0); });
+      const uGap = uB - uK;
+      const rowsHtml = items.map(jabatanRowHtml).join('');
+      return `
+        <div class="opd-multi-card" data-idx="${i}">
+          <div class="opd-multi-head">
+            <div>
+              <div class="opd-multi-name">${escapeHtml(unitName)}</div>
+              <div class="opd-multi-meta-line">${items.length} jabatan cocok · B:${uB} · K:${uK} · ${uGap > 0 ? '+' : ''}${uGap}</div>
+            </div>
+            <div class="opd-multi-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+          </div>
+          <div class="opd-multi-body">${rowsHtml}</div>
+        </div>`;
+    }).join('');
+
+    listEl.querySelectorAll('.opd-multi-card').forEach(card => {
+      card.querySelector('.opd-multi-head').addEventListener('click', () => card.classList.toggle('is-open'));
+    });
+
+    multiResult.hidden = false;
+  }
+
+  function renderResults(){
+    if (selectedOpd) renderModeB();
+    else renderModeA();
   }
 
   (async function initPetaJabatan(){
@@ -1183,7 +1381,9 @@ async function loadData(){
         ? 'data langsung dari Google Sheet'
         : 'data cadangan (tidak bisa memuat data langsung)';
       renderHeroStats(stats, meta);
-      initOpdSearch();
+      initHeroOpdSearch();
+      initFilterControls();
+      renderResults();
     } catch (e) {
       console.error('Gagal memuat data Peta Jabatan:', e);
       const elMeta = document.getElementById('statMeta');
