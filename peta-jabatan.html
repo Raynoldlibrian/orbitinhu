@@ -389,6 +389,8 @@
   .filter-row{display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:10px; margin-top:14px;}
   .chip-toggle{margin-left:4px;}
   .chip-toggle.active{background:linear-gradient(135deg, var(--status-negative), #C0483A); color:#fff;}
+  .chip-reset{background:none; color:var(--muted); border-style:dashed;}
+  .chip-reset:hover{color:var(--ivory); border-color:var(--gold-soft);}
   .opd-active-bar{
     margin-top:18px; text-align:center; font-size:.85rem; color:var(--muted);
     display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;
@@ -812,6 +814,7 @@
           <button class="chip" type="button" data-jenis="pelaksana">Pelaksana</button>
         </div>
         <button class="chip chip-toggle" type="button" id="gapOnlyToggle">Hanya kekurangan (-)</button>
+        <button class="chip chip-reset" type="button" id="filterResetBtn">↺ Reset filter</button>
       </div>
       <!-- ✏️ Tampil hanya di Mode B (OPD aktif terpilih dari hero) -->
       <div class="opd-active-bar" id="opdActiveBar" hidden>
@@ -1201,8 +1204,22 @@ async function loadData(){
     });
   }
 
+  function resetFilterUi(){
+    filterState.text = '';
+    filterState.jenis = 'semua';
+    filterState.gapOnly = false;
+    const textInput = document.getElementById('jabatanFilterInput');
+    if (textInput) textInput.value = '';
+    document.querySelectorAll('#jenisChipRow .chip').forEach(c => {
+      c.classList.toggle('active', c.getAttribute('data-jenis') === 'semua');
+    });
+    const gapToggle = document.getElementById('gapOnlyToggle');
+    if (gapToggle) gapToggle.classList.remove('active');
+  }
+
   function selectOpd(unitName){
     selectedOpd = unitName;
+    resetFilterUi(); // ✏️ pilih OPD baru = mulai bersih, filter lama dari pencarian sebelumnya tidak ikut terbawa
     const target = document.getElementById('peta-jabatan-opd');
     if (target) target.scrollIntoView({behavior:'smooth', block:'start'});
     renderResults();
@@ -1225,6 +1242,8 @@ async function loadData(){
     const chipRow = document.getElementById('jenisChipRow');
     const gapToggle = document.getElementById('gapOnlyToggle');
     const resetBtn = document.getElementById('opdActiveReset');
+
+    const filterResetBtn = document.getElementById('filterResetBtn');
 
     if (textInput){
       textInput.addEventListener('input', () => {
@@ -1253,6 +1272,16 @@ async function loadData(){
       resetBtn.addEventListener('click', () => {
         selectedOpd = null;
         document.getElementById('heroOpdInput').value = '';
+        renderResults();
+      });
+    }
+    if (filterResetBtn){
+      // ✏️ reset total: balik ke tampilan kosong/awal (bukan cuma bersihin filter,
+      // OPD yang lagi aktif juga dilepas).
+      filterResetBtn.addEventListener('click', () => {
+        selectedOpd = null;
+        document.getElementById('heroOpdInput').value = '';
+        resetFilterUi();
         renderResults();
       });
     }
