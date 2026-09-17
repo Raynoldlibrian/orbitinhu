@@ -416,6 +416,14 @@
   .opd-multi-card.is-open .opd-multi-chevron svg{transform:rotate(180deg);}
   .opd-multi-body{max-height:0; overflow:hidden; transition:max-height .3s ease;}
   .opd-multi-card.is-open .opd-multi-body{max-height:3000px;}
+  .multi-sub-group{border-top:1px solid var(--glass-border);}
+  .multi-sub-group:first-child{border-top:none;}
+  .multi-sub-label{
+    font-size:.68rem; font-weight:700; color:var(--gold); text-transform:uppercase;
+    letter-spacing:.03em; padding:10px 20px 2px;
+  }
+  .multi-sub-group .jabatan-row{border-top:none; padding-top:4px;}
+  .multi-sub-group .jabatan-row + .jabatan-row{border-top:1px dashed var(--glass-border); padding-top:9px;}
 
   .opd-empty-state{text-align:center; color:var(--muted); font-size:.9rem; margin-top:28px;}
 
@@ -1346,7 +1354,19 @@ async function loadData(){
       let uB = 0, uK = 0;
       items.forEach(it => { uB += (it.b||0); uK += (it.k||0); });
       const uGap = uB - uK;
-      const rowsHtml = items.map(jabatanRowHtml).join('');
+      // ✏️ Kelompokkan per Sub Unit Kerja biar jabatan dengan nama sama
+      // tetap kelihatan bedanya posisi di mana (bukan cuma OPD-nya).
+      const subOrder = [];
+      const subMap = {};
+      items.forEach(it => {
+        if (!subMap[it.sub]){ subMap[it.sub] = []; subOrder.push(it.sub); }
+        subMap[it.sub].push(it);
+      });
+      const rowsHtml = subOrder.map(subName => `
+          <div class="multi-sub-group">
+            <div class="multi-sub-label">${escapeHtml(subName)}</div>
+            ${subMap[subName].map(jabatanRowHtml).join('')}
+          </div>`).join('');
       return `
         <div class="opd-multi-card" data-idx="${i}">
           <div class="opd-multi-head">
