@@ -606,18 +606,10 @@
   .standar-head h2{font-family:var(--font-display); font-weight:800; font-size:clamp(1.6rem, 2.4vw, 2.2rem); line-height:1.1;}
   .standar-head p{color:var(--muted); font-size:.88rem; margin-top:8px; max-width:560px;}
 
-  .standar-bidang{margin-bottom:34px;}
-  .standar-bidang:last-child{margin-bottom:0;}
-  .standar-bidang-title{
-    display:flex; align-items:center; gap:10px; font-family:var(--font-display); font-weight:700;
-    font-size:1.05rem; color:var(--gold-soft); margin-bottom:16px;
-  }
-  .standar-bidang-title .num{
-    display:flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%;
-    background:var(--glass-fill); border:1px solid var(--glass-border); font-family:var(--font-body);
-    font-size:.72rem; font-weight:700; color:var(--ivory); flex-shrink:0;
-  }
-  .standar-grid{display:grid; grid-template-columns:repeat(5, 1fr); gap:14px;}
+  /* ✏️ AMAN DIUBAH SENDIRI: pill filter bidang (Semua / Kelembagaan / Pelayanan Publik / Reformasi
+     Birokrasi) — style chip-nya sama seperti chip kategori di Galeri Peraturan, cuma dikasih jarak
+     bawah tambahan di sini karena tidak dibungkus .galeri-controls. */
+  .standar-chip-row{margin-bottom:24px;}
   .standar-card{
     display:flex; flex-direction:column; gap:10px; text-align:left; cursor:pointer;
     background:var(--glass-fill); border:1px solid var(--glass-border); border-radius:16px;
@@ -630,7 +622,7 @@
   .standar-card-icon svg{width:16px; height:16px; stroke:var(--gold-soft);}
   .standar-card-title{
     font-size:.86rem; color:var(--ivory); font-weight:600; line-height:1.35; flex:1;
-    display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
+    display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden;
   }
   .standar-card-meta{display:flex; align-items:center; gap:6px; font-size:.68rem; color:var(--muted); font-weight:600;}
   .standar-card-meta svg{width:12px; height:12px; stroke:currentColor; flex-shrink:0;}
@@ -674,9 +666,6 @@
   .standar-modal-footer a{color:var(--gold-soft); text-decoration:none;}
   .standar-modal-footer a:hover{text-decoration:underline;}
 
-  @media (max-width:1040px){ .standar-grid{grid-template-columns:repeat(3, 1fr);} }
-  @media (max-width:760px){ .standar-grid{grid-template-columns:repeat(2, 1fr);} }
-  @media (max-width:480px){ .standar-grid{grid-template-columns:1fr;} }
   @media (max-width:860px){
     .section-standar{padding:56px 24px;}
   }
@@ -729,7 +718,7 @@
           Panduan Tata Naskah Dinas
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
         </a>
-        <a class="hero-quicklink" href="peta-jabatan.html" target="_blank" rel="noopener">
+        <a class="hero-quicklink" href="#" target="_blank" rel="noopener">
           Peta Jabatan
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
         </a>
@@ -872,7 +861,24 @@
       <h2>Standar Pelayanan</h2>
       <p>Persyaratan, prosedur, waktu, dan produk dari setiap layanan Bagian Organisasi Sekretariat Daerah Kabupaten Indragiri Hulu. Klik kartu untuk melihat detail.</p>
     </div>
-    <div id="standarBidangList"><!-- di-generate otomatis dari STANDAR_DATA --></div>
+    <div class="chip-row standar-chip-row" id="standarChipRow">
+      <button class="chip active" data-filter="semua">Semua</button>
+      <!-- pill Kelembagaan / Pelayanan Publik / Reformasi Birokrasi di-generate otomatis dari BIDANG_ORDER -->
+    </div>
+
+    <div class="doc-empty" id="standarEmpty">Tidak ada layanan yang cocok dengan filter ini.</div>
+    <div class="doc-carousel">
+      <button class="carousel-nav prev" id="standarPrev" aria-label="Slide sebelumnya">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="doc-track-wrap">
+        <div class="doc-track" id="standarTrack"></div>
+      </div>
+      <button class="carousel-nav next" id="standarNext" aria-label="Slide berikutnya">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+    <div class="carousel-dots" id="standarDots"></div>
   </div>
 </section>
 
@@ -1004,7 +1010,7 @@
 <footer class="site-footer">
   <div class="footer-wrap">
     <div class="footer-block">
-      <div class="fb-title">Orbit - Inhu</div>
+      <div class="fb-title">Orbit - Inhu</div><br>
       Bagian Organisasi<br>Sekretariat Daerah Kabupaten Indragiri Hulu<br>
       Jl. Lintas Timur Sumatera, Pematang Reba, Rengat Barat
     </div>
@@ -1016,9 +1022,10 @@
     <div class="footer-block footer-contact">
       <div class="fb-title">Kontak</div>
       <a href="mailto:organisasi.setdainhu@gmail.com" class="footer-email">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 6-10 7L2 6"></path></svg>
-        organisasi.setdainhu@gmail.com
+        organisasi.setdainhu@gmail.com <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 6-10 7L2 6"></path></svg>
       </a>
+      <br>Raynold Librian Shaputra<br>Ryan Pranugie Harianja, S.Tr.I.P.<br>Dikki Kurniansyah, SE
+      
     </div>
   </div>
   <div class="footer-bottom">&copy Raynold — 2026</div>
@@ -1810,9 +1817,9 @@
 
   /* ===== STANDAR PELAYANAN — DATA =====
      ✏️ AMAN DIUBAH SENDIRI: tambah/ubah/hapus layanan di array STANDAR_DATA
-     di bawah ini. "bidang" menentukan pengelompokan sub-heading (urutan
-     tampil ikut urutan BIDANG_ORDER). Semua field ditulis manual (bukan
-     dari Google Sheet), sesuai keputusan sebelumnya. */
+     di bawah ini. "bidang" menentukan pill filter mana yang menampilkan item
+     ini (urutan pill ikut urutan BIDANG_ORDER). Semua field ditulis manual
+     (bukan dari Google Sheet), sesuai keputusan sebelumnya. */
   const BIDANG_ORDER = ['Kelembagaan', 'Pelayanan Publik', 'Reformasi Birokrasi'];
 
   const STANDAR_DATA = [
@@ -1976,41 +1983,115 @@
   ];
 
   (function initStandarPelayanan(){
-    const listEl = document.getElementById('standarBidangList');
+    const track = document.getElementById('standarTrack');
+    const empty = document.getElementById('standarEmpty');
+    const chipRow = document.getElementById('standarChipRow');
+    const prevBtn = document.getElementById('standarPrev');
+    const nextBtn = document.getElementById('standarNext');
+    const dotsEl = document.getElementById('standarDots');
     const overlay = document.getElementById('standarModalOverlay');
-    if (!listEl || !overlay) return;
+    if (!track || !overlay) return;
 
     const cardIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>`;
     const clockIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>`;
 
-    // render kartu, dikelompokkan per bidang sesuai BIDANG_ORDER
-    BIDANG_ORDER.forEach((bidang, bIdx) => {
-      const items = STANDAR_DATA.filter(d => d.bidang === bidang);
-      if (!items.length) return;
+    let activeFilter = 'semua';
+    let currentSlide = 0;
 
-      const block = document.createElement('div');
-      block.className = 'standar-bidang';
-      block.innerHTML = `
-        <div class="standar-bidang-title"><span class="num">${bIdx + 1}</span>Bidang ${bidang}</div>
-        <div class="standar-grid"></div>
-      `;
-      const grid = block.querySelector('.standar-grid');
-
-      items.forEach(item => {
-        const card = document.createElement('button');
-        card.type = 'button';
-        card.className = 'standar-card';
-        card.innerHTML = `
-          <div class="standar-card-icon">${cardIconSVG}</div>
-          <div class="standar-card-title">${item.title}</div>
-          <div class="standar-card-meta">${clockIconSVG}${item.waktu}</div>
-        `;
-        card.addEventListener('click', () => openStandarModal(item, bidang));
-        grid.appendChild(card);
-      });
-
-      listEl.appendChild(block);
+    // ✏️ AMAN DIUBAH SENDIRI: pill Semua + satu pill per bidang di BIDANG_ORDER (persis pola
+    // chip kategori di Galeri Peraturan).
+    BIDANG_ORDER.forEach(bidang => {
+      const btn = document.createElement('button');
+      btn.className = 'chip';
+      btn.dataset.filter = bidang;
+      btn.textContent = bidang;
+      chipRow.appendChild(btn);
     });
+
+    // ✏️ AMAN DIUBAH SENDIRI: angka breakpoint (1040/760/480) & jumlah card di tiap breakpoint —
+    // HARUS SAMA PERSIS dengan media query .doc-slide di CSS (dipakai bareng Galeri Peraturan)
+    // supaya carousel nggak "geser aneh".
+    function getCardsPerSlide(){
+      const w = window.innerWidth;
+      if (w <= 480) return 1;
+      if (w <= 760) return 2;
+      if (w <= 1040) return 3;
+      return 5;
+    }
+
+    function getFilteredStandar(){
+      return activeFilter === 'semua' ? STANDAR_DATA : STANDAR_DATA.filter(d => d.bidang === activeFilter);
+    }
+
+    function buildStandarCard(item){
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'standar-card';
+      card.innerHTML = `
+        <div class="standar-card-icon">${cardIconSVG}</div>
+        <div class="standar-card-title">${item.title}</div>
+        <div class="standar-card-meta">${clockIconSVG}${item.waktu}</div>
+      `;
+      card.addEventListener('click', () => openStandarModal(item, item.bidang));
+      return card;
+    }
+
+    function renderStandar(){
+      const filtered = getFilteredStandar();
+      const perSlide = getCardsPerSlide();
+      const totalSlides = Math.max(1, Math.ceil(filtered.length / perSlide));
+      if (currentSlide > totalSlides - 1) currentSlide = totalSlides - 1;
+      if (currentSlide < 0) currentSlide = 0;
+
+      track.innerHTML = '';
+      empty.classList.toggle('show', filtered.length === 0);
+
+      for (let s = 0; s < totalSlides; s++){
+        const slideEl = document.createElement('div');
+        slideEl.className = 'doc-slide';
+        filtered.slice(s * perSlide, s * perSlide + perSlide).forEach(item => slideEl.appendChild(buildStandarCard(item)));
+        track.appendChild(slideEl);
+      }
+      track.style.transform = `translateX(-${currentSlide * 100}%)`;
+
+      renderDots(totalSlides);
+      prevBtn.disabled = currentSlide <= 0;
+      nextBtn.disabled = currentSlide >= totalSlides - 1;
+    }
+
+    function renderDots(totalSlides){
+      dotsEl.innerHTML = '';
+      if (totalSlides <= 1) return;
+      for (let i = 0; i < totalSlides; i++){
+        const b = document.createElement('button');
+        if (i === currentSlide) b.classList.add('active');
+        b.setAttribute('aria-label', `Slide ${i + 1}`);
+        b.addEventListener('click', () => { currentSlide = i; renderStandar(); });
+        dotsEl.appendChild(b);
+      }
+    }
+
+    prevBtn.addEventListener('click', () => { currentSlide--; renderStandar(); });
+    nextBtn.addEventListener('click', () => { currentSlide++; renderStandar(); });
+
+    // resize: jumlah card per slide bisa berubah — susun ulang carousel dari slide awal
+    let standarResizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(standarResizeTimer);
+      standarResizeTimer = setTimeout(() => { currentSlide = 0; renderStandar(); }, 200);
+    });
+
+    chipRow.addEventListener('click', (e) => {
+      const btn = e.target.closest('.chip');
+      if (!btn) return;
+      chipRow.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilter = btn.dataset.filter;
+      currentSlide = 0;
+      renderStandar();
+    });
+
+    renderStandar();
 
     function openStandarModal(item, bidang){
       document.getElementById('standarModalBidang').textContent = 'Bidang ' + bidang;
