@@ -55,7 +55,7 @@
      section ini (foto, ilustrasi, warna polos, dst). Struktur .hero-content
      & .topbar di bawah tetap dipertahankan. */
   .hero{
-    position:relative; min-height:80vh; display:flex; flex-direction:column; isolation:isolate;
+    position:relative; min-height:100vh; display:flex; flex-direction:column; isolation:isolate;
   }
   .placeholder-tag{position:absolute; top:14px; right:14px; z-index:2; font-size:.62rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); background:rgba(0,0,0,.28); border:1px solid var(--glass-border); padding:4px 9px; border-radius:20px; backdrop-filter:blur(6px);}
 
@@ -264,6 +264,12 @@
   /* ===== SOP ONLINE — penyesuaian di atas template ===== */
   .hero-quicklinks{margin-top:24px;}
   .hero-quicklinks .hero-quicklink{box-shadow:none;}
+  /* ✏️ AMAN DIUBAH SENDIRI: --hero-turun = seberapa jauh blok kiri hero (eyebrow, judul, tombol) turun dari posisi tengah.
+     0 = tepat di tengah (bawaan template). Makin besar makin turun. Satuan vh = persen tinggi layar, jadi ikut menyesuaikan
+     ukuran layar. Coba kisaran 6vh - 18vh. Bisa juga pakai px, mis. 90px. */
+  .hero-content{--hero-turun:10vh;}
+  .col-left{position:relative; top:var(--hero-turun);}
+  @media (max-width:860px){ .hero-content{--hero-turun:3vh;} }
   button.hero-quicklink{font-family:inherit; cursor:pointer;}
   .hero-status{margin-top:16px; font-size:.78rem; color:var(--muted);}
   .editor-tabs{margin-bottom:24px;}
@@ -584,6 +590,10 @@ function cetakSemua(){
 }
 
 function uid(){ return idCounter++; }
+function keIsian(){
+  const el = document.getElementById('isian');
+  if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+}
 
 // ---------- Pelaksana management ----------
 function renderPelaksanaTags(){
@@ -1088,6 +1098,7 @@ function proyekBaru(){
   renderPelaksanaTags();
   renderLogoPreview();
   renderAll();
+  keIsian();
 }
 
 // ---------- CSV export/import (local file, no server) ----------
@@ -1151,7 +1162,7 @@ function onImportCsv(e){
   if(!file) return;
   const reader = new FileReader();
   reader.onload = function(){
-    try{ applyCsvText(String(reader.result)); }
+    try{ applyCsvText(String(reader.result)); keIsian(); }
     catch(err){ alert('Gagal membaca file. Pastikan file berasal dari ekspor Generator SOP-AP (.csv).'); }
   };
   reader.readAsText(file, 'utf-8');
