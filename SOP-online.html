@@ -1210,8 +1210,9 @@ function initApp(){
 
 initApp();
 window.addEventListener('resize', ()=>requestAnimationFrame(drawConnectors));
-
+// font web bisa selesai dimuat ... -> gambar ulang konektor
+if(document.fonts && document.fonts.ready){ document.fonts.ready.then(()=>requestAnimationFrame(drawConnectors)); }
 </script>
-
+     
 </body>
 </html>
