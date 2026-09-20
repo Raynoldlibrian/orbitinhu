@@ -276,8 +276,21 @@
   button.hero-quicklink{font-family:inherit; cursor:pointer;}
   .hero-status{margin-top:16px; font-size:.78rem; color:var(--muted);}
   .editor-tabs{margin-bottom:24px;}
-  /* mode-cetak: dipasang lewat JS sesaat sebelum cetak (lihat siapkanCetak) — lebar kertas sama dengan aturan @media print */
-  .mode-cetak .paper{width:186mm; min-width:0; max-width:none; border:none; box-shadow:none;}
+  /* ===== KONEKTOR BAGAN ALIR (panah) — elemen .cx di dalam sel tabel, posisinya relatif terhadap sel =====
+     Warna & ketebalan: ubah --cx (panah biasa #1F3A5F, jalur "Tidak" #a5432f) dan angka 1.4px.
+     Jalur balik "Tidak" berada di tepi kanan kolom pelaksana paling kanan (jarak: 8px). */
+  table.bagan tbody td{position:relative;}
+  .cx{--cx:#1F3A5F; position:absolute; margin:0; padding:0; border:0; background:var(--cx); pointer-events:none;
+      -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .cx.t{--cx:#a5432f;}
+  .cx.v{left:calc(50% - .7px); width:1.4px;}
+  .cx.h{height:1.4px;}
+  .cx.v.lane{left:max(calc(50% + 26.6px), calc(100% - 8px));}   /* 26.6 = setengah lebar belah ketupat + 4; 8 = LANE_TEPI */
+  .cx.ad,.cx.al{width:0; height:0; background:none; border:0 solid transparent;}
+  .cx.ad{left:calc(50% - 4.2px); border-left-width:4.2px; border-right-width:4.2px; border-top:8.4px solid var(--cx);}
+  .cx.al{border-top-width:4.2px; border-bottom-width:4.2px; border-right:8.4px solid var(--cx);}
+  .cx.lbl{background:none; font-size:10.5px; font-weight:400; line-height:1.1; color:var(--cx); white-space:nowrap;}
+  .cx.ya{--cx:#7a5c1e;}
 
   /* ===== ANIMASI HERO (kolom kanan) =====
      ✏️ AMAN DIUBAH SENDIRI: --anim-w = lebar video (clamp: min, ikut lebar layar, maks);
@@ -347,6 +360,7 @@
   .step-actions button{border:none; background:var(--glass-fill); border-radius:6px; width:24px; height:24px; font-size:.78rem; cursor:pointer; color:var(--ivory);}
   .step-actions button:hover{background:var(--glass-fill-strong);}
   .preview-stack{display:flex; flex-direction:column; gap:40px;}
+  #prevBagan{order:1;} #prevIdentitas{order:2;}   /* tampilan layar: bagan alir di atas */
   .paper-scroll{overflow-x:auto; padding:2px;}
   .paper{max-width:none; width:100%; color:#16233A;}
   .preview-toolbar{margin-bottom:12px;}
@@ -359,16 +373,25 @@
   }
   @media (max-width:480px){ .row3{grid-template-columns:1fr;} .row2{grid-template-columns:1fr;} }
   @media print{
-    @page{margin:12mm;}
-    body{background:#fff;}
+    /* margin @page = 0 supaya header/footer bawaan browser (judul, alamat halaman, nomor halaman, tanggal)
+       tidak tercetak. Jarak tepi kertas dibuat lewat padding .section-penjelasan yang diulang di setiap halaman
+       (box-decoration-break:clone). Ubah angka 10mm 9mm = atas-bawah & kiri-kanan. */
+    @page{margin:0;}
+    html,body{background:#fff !important;}
     .hero,.section-galeri,.site-footer,.preview-toolbar,.penjelasan-head,.ornamen-atas,.ornamen-bawah{display:none !important;}
-    .section-penjelasan{padding:0;} .section-penjelasan::before{display:none;}
+    .section-penjelasan{padding:10mm 9mm; -webkit-box-decoration-break:clone; box-decoration-break:clone;}
+    .section-penjelasan::before{display:none;}
     .penjelasan-wrap{max-width:none;}
     .paper-scroll{overflow:visible; padding:0;}
-    .paper{border:none; box-shadow:none; min-width:0; width:186mm; max-width:none;}
-    #printWrap{display:flex; flex-direction:column; gap:0;}
-    #prevIdentitas{order:1; page-break-after:always; break-after:page;}
-    #prevBagan{order:2;}
+    /* lebar tabel = lebar kertas (dikurangi jarak tepi di atas), apa pun ukuran & orientasi kertasnya */
+    .paper{border:none; box-shadow:none; min-width:0; width:100%; max-width:none; padding:0;}
+    html,body{overflow:visible !important; height:auto !important; min-height:0 !important;}
+    #printWrap{display:block;}   /* bukan flex: supaya bagan yang panjang bisa lanjut ke halaman berikutnya di semua browser */
+    #prevIdentitas{page-break-after:always; break-after:page;}
+    /* bagan > 1 halaman: dipotong per langkah (baris tidak dibelah), judul kolom diulang di halaman berikutnya */
+    table.bagan thead{display:table-header-group;}
+    table.bagan tr{break-inside:avoid; page-break-inside:avoid;}
+    .paper h3,.paper .sub-title{break-after:avoid; page-break-after:avoid;}
   }
 </style>
 </head>
@@ -565,13 +588,14 @@
   <img class="ornamen-bawah" src="images/putik-cengkeh-bawah.png" alt="" aria-hidden="true">
   <div class="penjelasan-wrap">
     <div id="printWrap" class="preview-stack">
-      <div id="prevBagan">
-        <div class="preview-toolbar"><div class="jd">Pratinjau bagan alir — garis konektor digambar otomatis sesuai posisi kolom pelaksana</div></div>
-        <div class="paper-scroll"><div class="paper" id="paperArea"></div></div>
-      </div>
+      <!-- urutan di HTML = urutan cetak (identitas dulu, lalu bagan alir); di layar bagan alir ditampilkan lebih dulu lewat CSS order -->
       <div id="prevIdentitas">
         <div class="preview-toolbar"><div class="jd">Pratinjau lembar identitas SOP</div></div>
         <div class="paper-scroll"><div class="paper" id="identitasPaperArea"></div></div>
+      </div>
+      <div id="prevBagan">
+        <div class="preview-toolbar"><div class="jd">Pratinjau bagan alir — garis konektor digambar otomatis sesuai posisi kolom pelaksana</div></div>
+        <div class="paper-scroll"><div class="paper" id="paperArea"></div></div>
       </div>
     </div>
   </div>
@@ -628,23 +652,9 @@ const dasarHukumDefault = [
   "Peraturan Menteri Pendayagunaan Aparatur Negara dan Reformasi Birokrasi Nomor 35 Tahun 2012 tentang Pedoman Penyusunan Standar Operasional Prosedur Administrasi Pemerintahan"
 ];
 
-// Garis konektor bagan alir digambar berdasarkan posisi kotak di layar. Saat dicetak lebar kertas berbeda,
-// sehingga garis bisa bergeser. Solusinya: sebelum cetak, lebar kertas dikunci = lebar area cetak (186mm,
-// sama dengan aturan @media print), lalu garis digambar ulang pada lebar itu. Setelah cetak, dikembalikan.
-function siapkanCetak(){
-  document.documentElement.classList.add('mode-cetak');
-  drawConnectors();
-}
-function selesaiCetak(){
-  document.documentElement.classList.remove('mode-cetak');
-  requestAnimationFrame(drawConnectors);
-}
-window.addEventListener('beforeprint', siapkanCetak);   // juga berlaku kalau cetak lewat Ctrl+P
-window.addEventListener('afterprint', selesaiCetak);
 function cetakSemua(){
   renderAll();
   requestAnimationFrame(()=>{
-    siapkanCetak();
     requestAnimationFrame(()=>window.print());
   });
 }
@@ -806,10 +816,81 @@ function switchTab(name){
   const btnId = 'tabBtn' + name.charAt(0).toUpperCase() + name.slice(1);
   document.getElementById(btnId).classList.add('active');
   document.getElementById(btnId).setAttribute('aria-selected','true');
-  if(name==='bagan') requestAnimationFrame(drawConnectors);
 }
 
 // ---------- Bagan alir rendering ----------
+// Konektor (panah) digambar LANGSUNG di dalam sel tabel dengan posisi relatif (%, px kecil), bukan lapisan SVG yang
+// diukur dari layar. Akibatnya garis selalu pas di lebar berapa pun (layar, cetak, ukuran/orientasi kertas apa pun),
+// tidak perlu digambar ulang saat jendela diubah, dan ikut terpotong rapi kalau bagan pindah halaman cetak.
+const SHAPE_DIM = { proses:{w:40,h:22}, keputusan:{w:45.25,h:45.25}, mulai:{w:52,h:24}, selesai:{w:52,h:24} };
+const JOG_BAWAH = 4;     // tinggi garis belok mendatar dari batas bawah baris (px)
+
+function bangunKonektor(nCols){
+  const nRows = steps.length, last = nCols-1;
+  const ov = Array.from({length:nRows}, ()=>Array(nCols).fill(''));
+  const dim = s => SHAPE_DIM[s.tipe] || SHAPE_DIM.proses;
+  const kolom = s => { const k = pelaksanaList.indexOf(s.pelaksana); return k<0 ? -1 : k+2; };
+  const box = (cls, style, txt) => `<b class="cx ${cls}" style="${style}">${txt||''}</b>`;
+
+  // alur biasa: langkah i -> i+1
+  for(let i=0;i<nRows-1;i++){
+    const a = steps[i], b = steps[i+1], ca = kolom(a), cb = kolom(b);
+    if(ca<0 || cb<0) continue;
+    const ha = dim(a).h, hb = dim(b).h;
+    if(ca===cb){
+      ov[i][ca] += box('v', `top:calc(50% + ${ha/2}px);bottom:0`);
+    } else {
+      const kanan = cb>ca, y = `bottom:${JOG_BAWAH}px`;
+      ov[i][ca] += box('v', `top:calc(50% + ${ha/2}px);bottom:${JOG_BAWAH}px`);
+      ov[i][ca] += box('h', `${kanan?'left':'right'}:calc(50% - .7px);${kanan?'right':'left'}:0;${y}`);
+      for(let c=Math.min(ca,cb)+1;c<Math.max(ca,cb);c++) ov[i][c] += box('h', `left:0;right:0;${y}`);
+      ov[i][cb] += box('h', `${kanan?'left':'right'}:0;${kanan?'right':'left'}:calc(50% - .7px);${y}`);
+      ov[i][cb] += box('v', `top:calc(100% - ${JOG_BAWAH+1.4}px);bottom:0`);
+    }
+    ov[i+1][cb] += box('v', `top:0;bottom:calc(50% + ${hb/2+13.9}px)`);
+    ov[i+1][cb] += box('ad', `top:calc(50% - ${hb/2+14.4}px)`);
+    if(a.tipe==='keputusan') ov[i][ca] += box('lbl ya', `left:calc(50% + 6px);top:calc(50% + ${ha/2+3}px)`, 'Ya');
+  }
+
+  // jalur balik "Tidak": dari sisi kanan keputusan -> jalur vertikal di tepi kanan area PELAKSANA -> sisi kanan langkah tujuan
+  // (sengaja tidak keluar sampai ke kolom Mutu Baku/Ket supaya tidak menggaris-coret teks)
+  const lastP = pelaksanaList.length + 1;                  // indeks kolom pelaksana paling kanan
+  const sisa = 'calc(min(50% - 26.6px, 8px) - 1.4px)';     // garis berhenti tepat di jalur vertikal
+  steps.forEach((s,i)=>{
+    if(s.tipe!=='keputusan' || !s.tidakTarget) return;
+    const j = steps.findIndex(t=>t.id===s.tidakTarget);
+    if(j<0 || j===i) return;
+    const cs = kolom(s), ct = kolom(steps[j]);
+    if(cs<0 || ct<0) return;
+    const ws = dim(s).w, wt = dim(steps[j]).w;
+    const mid = 'top:calc(50% - .7px)', naik = j<i;
+    // keluar dari sisi kanan keputusan
+    if(cs<lastP){
+      ov[i][cs] += box('h t', `left:calc(50% + ${ws/2}px);right:0;${mid}`);
+      for(let c=cs+1;c<lastP;c++) ov[i][c] += box('h t', `left:0;right:0;${mid}`);
+      ov[i][lastP] += box('h t', `left:0;right:${sisa};${mid}`);
+    } else {
+      ov[i][cs] += box('h t', `left:calc(50% + ${ws/2}px);right:${sisa};${mid}`);
+    }
+    // label "Tidak": di sisi yang tidak dilewati jalur vertikal (jalur naik -> label di bawah garis; jalur turun -> di atas)
+    ov[i][cs] += box('lbl t', `left:calc(50% + ${ws/2+2}px);top:calc(50% ${naik?'+ 3px':'- 14px'})`, 'Tidak');
+    // jalur vertikal
+    ov[i][lastP] += box('v lane t', naik ? 'top:0;bottom:calc(50% - .7px)' : 'top:calc(50% - .7px);bottom:0');
+    for(let r=Math.min(i,j)+1;r<Math.max(i,j);r++) ov[r][lastP] += box('v lane t', 'top:0;bottom:0');
+    ov[j][lastP] += box('v lane t', naik ? 'top:calc(50% - .7px);bottom:0' : 'top:0;bottom:calc(50% - .7px)');
+    // kembali ke sisi kanan langkah tujuan (panah menunjuk ke kiri)
+    if(ct<lastP){
+      ov[j][lastP] += box('h t', `left:0;right:${sisa};${mid}`);
+      for(let c=ct+1;c<lastP;c++) ov[j][c] += box('h t', `left:0;right:0;${mid}`);
+      ov[j][ct] += box('h t', `left:calc(50% + ${wt/2+10}px);right:0;${mid}`);
+    } else {
+      ov[j][ct] += box('h t', `left:calc(50% + ${wt/2+10}px);right:${sisa};${mid}`);
+    }
+    ov[j][ct] += box('al t', `left:calc(50% + ${wt/2+2}px);top:calc(50% - 4.2px)`);
+  });
+  return ov;
+}
+
 function renderPaper(){
   const paper = document.getElementById('paperArea');
   const judul = document.getElementById('inpJudul').value.trim() || '(Judul SOP belum diisi)';
@@ -824,26 +905,28 @@ function renderPaper(){
     return;
   }
 
+  const nP = pelaksanaList.length;
+  const ov = bangunKonektor(6 + nP);   // kolom: No, Kegiatan, [pelaksana...], Kelengkapan, Waktu, Output, Ket
   const colHeaders = pelaksanaList.map(p=>`<th>${escapeHtml(p)}</th>`).join('');
   const rows = steps.map((s,i)=>{
-    const pelaksanaCells = pelaksanaList.map(p=>{
-      if(s.pelaksana!==p) return '<td class="pelaksana-cell"></td>';
-      const shapeClass = s.tipe;
+    const pelaksanaCells = pelaksanaList.map((p,k)=>{
+      if(s.pelaksana!==p) return `<td class="pelaksana-cell">${ov[i][k+2]}</td>`;
+      const shapeClass = SHAPE_DIM[s.tipe] ? s.tipe : 'proses';
       const label = (s.tipe==='mulai') ? 'Mulai' : (s.tipe==='selesai') ? 'Selesai' : String(i+1);
       return `<td class="pelaksana-cell" data-step-id="${s.id}">
         <div class="shape-wrap">
           <div class="shape ${shapeClass}" data-shape-id="${s.id}"><span>${label}</span></div>
-        </div>
+        </div>${ov[i][k+2]}
       </td>`;
     }).join('');
     return `<tr>
-      <td class="no-cell">${i+1}</td>
-      <td class="kegiatan-cell">${escapeHtml(s.kegiatan)}</td>
+      <td class="no-cell">${i+1}${ov[i][0]}</td>
+      <td class="kegiatan-cell">${escapeHtml(s.kegiatan)}${ov[i][1]}</td>
       ${pelaksanaCells}
-      <td>${escapeHtml(s.kelengkapan)}</td>
-      <td>${escapeHtml(s.waktu)}</td>
-      <td>${escapeHtml(s.output)}</td>
-      <td>${escapeHtml(s.ket)}</td>
+      <td>${escapeHtml(s.kelengkapan)}${ov[i][2+nP]}</td>
+      <td>${escapeHtml(s.waktu)}${ov[i][3+nP]}</td>
+      <td>${escapeHtml(s.output)}${ov[i][4+nP]}</td>
+      <td>${escapeHtml(s.ket)}${ov[i][5+nP]}</td>
     </tr>`;
   }).join('');
 
@@ -869,74 +952,8 @@ function renderPaper(){
         </thead>
         <tbody>${rows}</tbody>
       </table>
-      <svg class="connector-layer" id="svgLayer"></svg>
     </div>
   `;
-  requestAnimationFrame(drawConnectors);
-}
-
-function drawConnectors(){
-  const container = document.getElementById('diagramContainer');
-  const svg = document.getElementById('svgLayer');
-  if(!container || !svg) return;
-  const cRect = container.getBoundingClientRect();
-
-  const laneMargin = 20; // harus lebih kecil dari padding kanan .paper (26px) supaya tidak memunculkan scrollbar horizontal
-  svg.setAttribute('width', cRect.width + laneMargin);
-  svg.setAttribute('height', cRect.height);
-  svg.style.width = (cRect.width + laneMargin) + 'px';
-  svg.style.height = cRect.height + 'px';
-
-  svg.innerHTML = `
-    <defs>
-      <marker id="arrowHead" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-        <path d="M0,0 L6,3 L0,6 Z" fill="#1F3A5F"></path>
-      </marker>
-    </defs>`;
-
-  function centerOf(stepId){
-    const shape = document.querySelector(`[data-shape-id="${stepId}"]`);
-    if(!shape) return null;
-    const r = shape.getBoundingClientRect();
-    return { x: r.left - cRect.left + r.width/2, y: r.top - cRect.top + r.height/2, w: r.width, h: r.height };
-  }
-
-  let svgContent = '';
-  const laneX = cRect.width + laneMargin - 10;
-
-  for(let i=0;i<steps.length-1;i++){
-    const a = steps[i], b = steps[i+1];
-    const pa = centerOf(a.id), pb = centerOf(b.id);
-    if(!pa || !pb) continue;
-    const start = {x: pa.x, y: pa.y + pa.h/2};
-    const end = {x: pb.x, y: pb.y - pb.h/2 - 6};
-    let d;
-    if(Math.abs(start.x-end.x) < 2){
-      d = `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
-    } else {
-      const midY = start.y + (end.y-start.y)/2;
-      d = `M ${start.x} ${start.y} L ${start.x} ${midY} L ${end.x} ${midY} L ${end.x} ${end.y}`;
-    }
-    svgContent += `<path d="${d}" stroke="#1F3A5F" stroke-width="1.4" fill="none" marker-end="url(#arrowHead)"/>`;
-    if(a.tipe==='keputusan'){
-      svgContent += `<text x="${start.x+6}" y="${start.y+12}" font-size="10.5" fill="#7a5c1e">Ya</text>`;
-    }
-  }
-
-  steps.forEach((s)=>{
-    if(s.tipe!=='keputusan' || !s.tidakTarget) return;
-    const target = steps.find(t=>t.id===s.tidakTarget);
-    if(!target) return;
-    const pa = centerOf(s.id), pb = centerOf(target.id);
-    if(!pa || !pb) return;
-    const start = {x: pa.x + pa.w/2, y: pa.y};
-    const end = {x: pb.x + pb.w/2 + 2, y: pb.y};
-    const d = `M ${start.x} ${start.y} L ${laneX} ${start.y} L ${laneX} ${end.y} L ${end.x} ${end.y}`;
-    svgContent += `<path d="${d}" stroke="#a5432f" stroke-width="1.4" fill="none" marker-end="url(#arrowHead)"/>`;
-    svgContent += `<text x="${start.x+8}" y="${start.y-6}" font-size="10.5" fill="#a5432f">Tidak</text>`;
-  });
-
-  svg.innerHTML += svgContent;
 }
 
 // ---------- Lembar Identitas rendering ----------
@@ -1291,9 +1308,6 @@ initApp();
   sync();
 })();
 
-window.addEventListener('resize', ()=>requestAnimationFrame(drawConnectors));
-// font web bisa selesai dimuat ... -> gambar ulang konektor
-if(document.fonts && document.fonts.ready){ document.fonts.ready.then(()=>requestAnimationFrame(drawConnectors)); }
 </script>
      
 </body>
