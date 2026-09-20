@@ -9,8 +9,9 @@
      ✏️ AMAN DIUBAH SENDIRI  = teks, warna, URL, angka konfigurasi.
                                 Ubah langsung nilainya, jangan ubah
                                 nama variabel/struktur di sekitarnya.
-     🚫 JANGAN DIUBAH        = logika JS (fetch, render, escapeHtml,
-                                safeUrl, event listener, carousel). Kalau
+     🚫 JANGAN DIUBAH        = logika JS (render bagan & identitas, konektor,
+                                escapeHtml, simpan/buka CSV, event listener,
+                                animasi hero). Kalau
                                 ini diubah sembarangan, section terkait
                                 bisa berhenti berfungsi.
      Cari kata "✏️" atau "🚫" di file ini (Ctrl+F) untuk lompat ke
@@ -42,7 +43,7 @@
     --gold-soft:#C99A3E;
     --ivory:#16233A;    /* dulu krem terang — sekarang teks gelap utama */
     --muted:#5C6B80;
-    --ink:#081B33;      /* teks/ikon gelap tetap di atas latar emas (tombol search, chip aktif) */
+    --ink:#081B33;      /* teks/ikon gelap tetap di atas latar emas (tombol utama, chip aktif) */
     --font-display:'Fraunces', serif;
     --font-body:'Plus Jakarta Sans', sans-serif;
   }
@@ -50,9 +51,11 @@
   body{font-family:var(--font-body); background:var(--navy-deep); color:var(--ivory); min-height:100vh; overflow-x:hidden;}
   a{color:inherit; text-decoration:none;}
   /* ===== HERO =====
-     ✏️ Versi 2: background icon besar & animasi carousel-nya SUDAH DIHAPUS
-     (sengaja dikosongkan) — biar staf bebas berkreasi sendiri di hero
-     section ini (foto, ilustrasi, warna polos, dst). Struktur .hero-content
+     ✏️ Versi 2: background icon besar & animasi carousel-nya SUDAH DIHAPUS.
+     Kolom kiri = teks & tombol, kolom kanan = video animasi (lihat blok
+     "ANIMASI HERO" di bagian "SOP ONLINE" paling bawah CSS). Latar hero
+     dibiarkan bebas diganti (warna/foto) — video memakai mix-blend-mode
+     sehingga otomatis menyatu dengan latar apa pun. Struktur .hero-content
      & .topbar di bawah tetap dipertahankan. */
   .hero{
     position:relative; min-height:100vh; display:flex; flex-direction:column; isolation:isolate;
@@ -84,11 +87,11 @@
   .title-stack .l1 span{color:var(--gold);}
   .title-stack .l2{font-size:.72rem; letter-spacing:.05em; text-transform:uppercase; color:var(--muted);}
 
-  /* ===== HERO CONTENT — sekarang 1 kolom (statcard pindah ke Section Nilai) =====
+  /* ===== HERO CONTENT — 2 kolom: teks di kiri, video animasi di kanan =====
      ✏️ Sama pola 2-level: .hero-content cuma padding luar (vertikal + fallback
      40px sisi di layar sempit). .hero-content-wrap yang dibatasi 1180px &
      ditengahkan — ini yang bikin teks hero align presisi sama logo header,
-     icon besar di background, dan semua section di bawahnya. */
+     dan semua section di bawahnya. */
   .hero-content{
     flex:1; position:relative; z-index:3;
     display:flex; flex-direction:column; justify-content:center;
@@ -110,10 +113,10 @@
   }
   h1 em{font-style:italic; color:var(--gold);}
   .tagline{max-width:460px; color:var(--muted); font-size:.94rem; line-height:1.6; margin-bottom:26px; font-weight:500;}
-  /* ===== TOMBOL LINK CEPAT DI BAWAH SEARCH BAR =====
-     ✏️ AMAN DIUBAH SENDIRI: teks, href, dan urutan tombol ada di HTML dekat
-     form pencarian hero. Style-nya sengaja disamakan sama .search-shell
-     (glass pill) biar terasa satu keluarga visual. */
+  /* ===== TOMBOL MENU CEPAT DI BAWAH JUDUL HERO =====
+     ✏️ AMAN DIUBAH SENDIRI: teks, ikon, dan urutan tombol (Proyek Baru, Buka,
+     Simpan, Cetak) ada di HTML pada blok .hero-quicklinks. Style-nya berupa
+     glass pill, tanpa shadow (lihat blok "SOP ONLINE" di bawah). */
   .hero-quicklinks{display:flex; flex-wrap:wrap; gap:12px; margin-bottom:6px;}
   .hero-quicklink{
     display:inline-flex; align-items:center; gap:9px;
@@ -127,9 +130,9 @@
   .hero-quicklink svg{width:13px; height:13px; flex-shrink:0; stroke:var(--gold-soft);}
   /* ✏️ AMAN DIUBAH SENDIRI — PERCOBAAN v2: ornamen ukiran datar di batas atas & bawah section —
      BUKAN tiling, cuma 1 gambar, lebarnya ngikutin lebar konten section (maks 1180px, sama
-     seperti .kalender-wrap/.nilai-wrap/.galeri-wrap), bukan selebar layar.
+     seperti .galeri-wrap/.penjelasan-wrap), bukan selebar layar.
      - max-width: 1180px = harus SAMA dengan max-width wrapper konten section biar rata kiri-kanan.
-     - opacity: .05 — silakan dicoba-coba angka lain sesuai selera. */
+     - opacity: .04 — silakan dicoba-coba angka lain sesuai selera. */
   .ornamen-atas, .ornamen-bawah{
     position:absolute; left:50%; transform:translateX(-50%);
     width:100%; max-width:1180px; height:auto;
@@ -273,6 +276,37 @@
   button.hero-quicklink{font-family:inherit; cursor:pointer;}
   .hero-status{margin-top:16px; font-size:.78rem; color:var(--muted);}
   .editor-tabs{margin-bottom:24px;}
+  /* mode-cetak: dipasang lewat JS sesaat sebelum cetak (lihat siapkanCetak) — lebar kertas sama dengan aturan @media print */
+  .mode-cetak .paper{width:186mm; min-width:0; max-width:none; border:none; box-shadow:none;}
+
+  /* ===== ANIMASI HERO (kolom kanan) =====
+     ✏️ AMAN DIUBAH SENDIRI: --anim-w = lebar video (clamp: min, ikut lebar layar, maks);
+     --anim-bleed = bagian kanan video yang dibiarkan keluar dari kolom (frame video punya ruang
+     kosong di sisi kanan, jadi aman "menggantung" ke margin halaman). Otomatis dibatasi supaya
+     video tidak pernah melewati tepi layar; isi 0px kalau tidak mau menggantung.
+     Posisi vertikal ikut --hero-turun (di atas) supaya sejajar dengan blok teks kiri.
+     CARA VIDEO NGE-BLEND: mix-blend-mode:multiply membuat piksel putih video "hilang" dan
+     memakai warna latar hero di belakangnya (bayangan lantai di video jadi bayangan halus).
+     Supaya blend jalan, .hero HARUS punya warna latar sendiri dan .hero-content tidak boleh
+     jadi stacking context (z-index) — dua-duanya diatur di bawah, jangan dihapus.
+     Ornamen cengkeh-hero tetap terlihat: multiply hanya menggelapkan, tidak menutupi, dan
+     video tidak menangkap klik (pointer-events:none) sehingga tombol di bawahnya tetap bisa diklik. */
+  .hero{background:var(--navy-deep);}
+  .hero-content{z-index:auto; --anim-w:clamp(300px, 34vw, 520px); --anim-bleed:min(calc(var(--anim-w) * .25), calc(max(40px, calc((100vw - 1180px) / 2)) - 8px));}
+  .col-right{position:relative; top:var(--hero-turun); min-width:0;}
+  .hero-anim{display:block; width:var(--anim-w); max-width:none; height:auto; margin-right:calc(var(--anim-bleed) * -1); mix-blend-mode:multiply; pointer-events:none; user-select:none;}
+  @media (min-width:861px){
+    .hero-content-wrap{grid-template-columns:minmax(0,1fr) calc(var(--anim-w) - var(--anim-bleed)); gap:24px;}
+  }
+  /* layar sedang: ruang kiri kurang untuk 4 tombol 1 baris, jadi dibuat 2x2 biar rapi (bukan 3+1) */
+  @media (min-width:861px) and (max-width:1279px){
+    .hero-quicklinks{display:grid; grid-template-columns:repeat(2,max-content);}
+  }
+  @media (max-width:860px){
+    .hero-content{--anim-w:min(100%, 380px); --anim-bleed:0px;}
+    .col-right{top:0;}
+    .hero-anim{margin:0 auto;}
+  }
   .tab-content{display:none;}
   .tab-content.active{display:block;}
   .panel{background:var(--glass-fill); border:1px solid var(--glass-border); border-radius:20px; padding:28px 26px;}
@@ -331,7 +365,7 @@
     .section-penjelasan{padding:0;} .section-penjelasan::before{display:none;}
     .penjelasan-wrap{max-width:none;}
     .paper-scroll{overflow:visible; padding:0;}
-    .paper{border:none; box-shadow:none; min-width:0;}
+    .paper{border:none; box-shadow:none; min-width:0; width:186mm; max-width:none;}
     #printWrap{display:flex; flex-direction:column; gap:0;}
     #prevIdentitas{order:1; page-break-after:always; break-after:page;}
     #prevBagan{order:2;}
@@ -342,8 +376,8 @@
 
 <section class="hero">
   <!-- ✏️ v2: background icon besar + animasinya sudah dihapus dari sini.
-       Hero section ini sekarang kosong (cuma topbar + konten teks di bawah),
-       silakan diisi sendiri (foto, ilustrasi, warna polos, dst). -->
+       Isi hero: topbar, lalu .hero-content (kiri: teks & tombol, kanan: video
+       animasi). Latar hero bebas diganti sendiri (foto, ilustrasi, warna). -->
 
   <div class="topbar">
     <div class="topbar-wrap">
@@ -373,6 +407,16 @@
         <input type="file" id="fileCsv" accept=".csv" onchange="onImportCsv(event)" hidden>
       </div>
       <div class="hero-status" id="draftStatus">Susun bagan alir &amp; identitas SOP otomatis — draft tersimpan otomatis di browser ini</div>
+    </div>
+    <!-- ✏️ AMAN DIUBAH SENDIRI: animasi hero (kolom kanan). Ganti file video (.mp4 & .webm) dan poster di folder
+         images/ dengan nama yang sama. Video sengaja tanpa suara supaya bisa jalan otomatis di semua browser. -->
+    <div class="col-right" aria-hidden="true">
+      <video class="hero-anim" id="heroAnim" poster="images/animasi-sop-poster.jpg"
+             autoplay muted loop playsinline preload="auto" tabindex="-1"
+             disablepictureinpicture disableremoteplayback>
+        <source src="images/animasi-sop.mp4" type="video/mp4">
+        <source src="images/animasi-sop.webm" type="video/webm">
+      </video>
     </div>
     </div>
   </div>
@@ -544,7 +588,7 @@
       Jl. Lintas Timur Sumatera, Pematang Reba, Rengat Barat
     </div>
     <div class="footer-divider">
-      <!-- ✏️ AMAN DIUBAH SENDIRI: ganti "images/lebah-pair_baru.png" kalau nama/lokasi filenya beda -->
+      <!-- ✏️ AMAN DIUBAH SENDIRI: ganti "images/batas.png" kalau nama/lokasi filenya beda -->
       <img src="images/batas.png" alt="" class="footer-ornament">
     </div>
     <!-- ✏️ AMAN DIUBAH SENDIRI: nama kontributor & link email bisa diganti/ditambah di sini -->
@@ -556,7 +600,7 @@
       </a>
     </div>
   </div>
-  <div class="footer-bottom">&copy Raynold — 2026</div>
+  <div class="footer-bottom">&copy; Raynold — 2026</div>
 </footer>
 
 <script>
@@ -584,9 +628,23 @@ const dasarHukumDefault = [
   "Peraturan Menteri Pendayagunaan Aparatur Negara dan Reformasi Birokrasi Nomor 35 Tahun 2012 tentang Pedoman Penyusunan Standar Operasional Prosedur Administrasi Pemerintahan"
 ];
 
+// Garis konektor bagan alir digambar berdasarkan posisi kotak di layar. Saat dicetak lebar kertas berbeda,
+// sehingga garis bisa bergeser. Solusinya: sebelum cetak, lebar kertas dikunci = lebar area cetak (186mm,
+// sama dengan aturan @media print), lalu garis digambar ulang pada lebar itu. Setelah cetak, dikembalikan.
+function siapkanCetak(){
+  document.documentElement.classList.add('mode-cetak');
+  drawConnectors();
+}
+function selesaiCetak(){
+  document.documentElement.classList.remove('mode-cetak');
+  requestAnimationFrame(drawConnectors);
+}
+window.addEventListener('beforeprint', siapkanCetak);   // juga berlaku kalau cetak lewat Ctrl+P
+window.addEventListener('afterprint', selesaiCetak);
 function cetakSemua(){
   renderAll();
   requestAnimationFrame(()=>{
+    siapkanCetak();
     requestAnimationFrame(()=>window.print());
   });
 }
@@ -613,6 +671,7 @@ function tambahPelaksana(){
   const inp = document.getElementById('inpPelaksanaBaru');
   const val = inp.value.trim();
   if(!val) return;
+  if(pelaksanaList.some(p=>p.toLowerCase()===val.toLowerCase())){ alert('Kolom pelaksana itu sudah ada.'); return; }
   pelaksanaList.push(val);
   inp.value='';
   renderPelaksanaTags();
@@ -822,7 +881,7 @@ function drawConnectors(){
   if(!container || !svg) return;
   const cRect = container.getBoundingClientRect();
 
-  const laneMargin = 34;
+  const laneMargin = 20; // harus lebih kecil dari padding kanan .paper (26px) supaya tidak memunculkan scrollbar horizontal
   svg.setAttribute('width', cRect.width + laneMargin);
   svg.setAttribute('height', cRect.height);
   svg.style.width = (cRect.width + laneMargin) + 'px';
@@ -1000,7 +1059,7 @@ function toggleUseESign(chk){
   renderAll();
 }
 
-// ---------- Project save/load (db capability) ----------
+// ---------- Pengumpulan state proyek (dipakai draft otomatis & ekspor CSV) ----------
 function collectState(){
   return {
     judul: document.getElementById('inpJudul').value,
@@ -1165,7 +1224,7 @@ function onImportCsv(e){
   const reader = new FileReader();
   reader.onload = function(){
     try{ applyCsvText(String(reader.result)); keIsian(); }
-    catch(err){ alert('Gagal membaca file. Pastikan file berasal dari ekspor Generator SOP-AP (.csv).'); }
+    catch(err){ alert('Gagal membaca file. Pastikan file berasal dari tombol "Simpan Proyek (.csv)" di halaman Susun SOP Online.'); }
   };
   reader.readAsText(file, 'utf-8');
   e.target.value = '';
@@ -1182,12 +1241,16 @@ function applyCsvText(text){
     } else if(r[0]==='STEP'){
       newSteps.push({
         id: parseInt(r[1],10) || 0,
-        kegiatan: r[2]||'', tipe: r[3]||'proses', pelaksana: r[4]||'',
+        kegiatan: r[2]||'', tipe: ['proses','keputusan','mulai','selesai'].includes(r[3]) ? r[3] : 'proses', pelaksana: r[4]||'',
         kelengkapan: r[5]||'', waktu: r[6]||'', output: r[7]||'', ket: r[8]||'',
         tidakTarget: r[9] ? parseInt(r[9],10) : null
       });
     }
   });
+  // nomor id langkah dibuat ulang (1..n) supaya tidak ada id kosong/kembar; rujukan "Tidak" ikut dipetakan
+  const oldToNew = new Map();
+  newSteps.forEach((s,i)=>{ if(s.id && !oldToNew.has(s.id)) oldToNew.set(s.id, i+1); s.id = i+1; });
+  newSteps.forEach(s=>{ s.tidakTarget = oldToNew.get(s.tidakTarget) || null; });
   meta.useESign = meta.useESign === 'true' || meta.useESign === true;
   meta.pelaksanaList = pelaksanaFromCsv;
   meta.steps = newSteps;
@@ -1210,6 +1273,24 @@ function initApp(){
 }
 
 initApp();
+
+// ---------- Animasi hero: hormati "kurangi gerakan" perangkat & hemat baterai saat hero tak terlihat ----------
+(function(){
+  const v = document.getElementById('heroAnim');
+  if(!v) return;
+  const mq = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  let visible = true;
+  function sync(){
+    if((mq && mq.matches) || !visible){ v.pause(); return; }
+    const p = v.play(); if(p && p.catch) p.catch(()=>{});
+  }
+  if(mq && mq.addEventListener) mq.addEventListener('change', sync);
+  if('IntersectionObserver' in window){
+    new IntersectionObserver(es=>{ visible = es[0].isIntersecting; sync(); }, {threshold:0.1}).observe(v);
+  }
+  sync();
+})();
+
 window.addEventListener('resize', ()=>requestAnimationFrame(drawConnectors));
 // font web bisa selesai dimuat ... -> gambar ulang konektor
 if(document.fonts && document.fonts.ready){ document.fonts.ready.then(()=>requestAnimationFrame(drawConnectors)); }
