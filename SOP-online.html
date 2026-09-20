@@ -352,6 +352,8 @@
   .hint-box{background:var(--glass-fill-strong); border-radius:10px; padding:9px 12px; font-size:.72rem; color:var(--muted); margin-top:8px; line-height:1.55;}
   .step-card{background:#fff; border:1px solid var(--glass-border); border-left:3px solid var(--ink); border-radius:12px; padding:10px 12px; margin-bottom:8px;}
   .step-card.keputusan{border-left-color:var(--gold);}
+  .step-card.editing{border-color:var(--gold); box-shadow:0 0 0 2px rgba(184,134,46,.25);}   /* langkah yang sedang diedit */
+  .edit-banner{display:none; background:rgba(184,134,46,.12); border:1px solid var(--gold); border-radius:10px; padding:7px 11px; font-size:.75rem; color:var(--ink); margin-bottom:8px; line-height:1.5;}
   .step-card .meta{display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
   .step-card .no{font-size:.68rem; color:var(--muted); font-weight:700;}
   .step-card p{margin:3px 0; font-size:.83rem; line-height:1.4;}
@@ -376,11 +378,15 @@
     /* margin @page = 0 supaya header/footer bawaan browser (judul, alamat halaman, nomor halaman, tanggal)
        tidak tercetak. Jarak tepi kertas dibuat lewat padding .section-penjelasan yang diulang di setiap halaman
        (box-decoration-break:clone). Ubah angka 10mm 9mm = atas-bawah & kiri-kanan. */
-    @page{margin:0;}
+    @page{size:landscape; margin:0;}   /* landscape = orientasi kertas selalu mendatar (ukuran kertas ikut pilihan/default printer) */
     html,body{background:#fff !important;}
     .hero,.section-galeri,.site-footer,.preview-toolbar,.penjelasan-head,.ornamen-atas,.ornamen-bawah{display:none !important;}
     .section-penjelasan{padding:10mm 9mm; -webkit-box-decoration-break:clone; box-decoration-break:clone;}
     .section-penjelasan::before{display:none;}
+    /* lembar identitas: judul "LEMBAR IDENTITAS SOP" + sub-judul hanya tampil di layar, tidak dicetak */
+    #identitasPaperArea > h3, #identitasPaperArea > .sub-title{display:none !important;}
+    /* warna latar (bentuk Mulai/Selesai, judul kolom) tetap tercetak walau "Print backgrounds" di dialog cetak tidak dicentang */
+    #pratinjau, #pratinjau *{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
     .penjelasan-wrap{max-width:none;}
     .paper-scroll{overflow:visible; padding:0;}
     /* lebar tabel = lebar kertas (dikurangi jarak tepi di atas), apa pun ukuran & orientasi kertasnya */
@@ -465,8 +471,9 @@
             <button class="btn btn-outline" onclick="tambahPelaksana()">+</button>
           </div>
 
-          <h3 class="fh">Tambah Langkah</h3>
+          <h3 class="fh" id="hFormLangkah">Tambah Langkah</h3>
           <div class="add-form">
+            <div class="edit-banner" id="editBanner"></div>
             <label>Kegiatan</label>
             <textarea id="fKegiatan" placeholder="Deskripsi kegiatan..."></textarea>
             <div class="row2">
@@ -495,7 +502,8 @@
             </div>
             <label>Keterangan (opsional)</label>
             <input type="text" id="fKet">
-            <button class="btn btn-primary btn-block" onclick="tambahLangkah()">Tambah Langkah</button>
+            <button class="btn btn-primary btn-block" id="btnSimpanLangkah" onclick="tambahLangkah()">Tambah Langkah</button>
+            <button class="btn btn-outline btn-block" id="btnBatalEdit" onclick="batalEdit()" style="display:none;margin-top:8px;">Batal</button>
           </div>
         </div>
 
@@ -641,6 +649,7 @@
 let pelaksanaList = ["Petugas Pelaksana", "Kepala Unit"];
 let steps = [];
 let idCounter = 1;
+let editingId = null;   // id langkah yang sedang diedit (null = form dalam mode "Tambah Langkah")
 let logoDataUrl = null;
 let useESign = false;
 
@@ -697,7 +706,9 @@ function hapusPelaksana(i){
 }
 function renderPelaksanaSelect(){
   const sel = document.getElementById('fPelaksana');
+  const cur = sel.value;
   sel.innerHTML = pelaksanaList.map(p=>`<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('');
+  if(cur && pelaksanaList.includes(cur)) sel.value = cur;
 }
 
 // ---------- Step form ----------
@@ -708,8 +719,62 @@ function toggleTidakField(){
 }
 function refreshTidakTargetOptions(){
   const sel = document.getElementById('fTidakTarget');
+  const cur = sel.value;   // pilihan jangan hilang tiap kali tampilan digambar ulang
   sel.innerHTML = '<option value="">(tidak ada / lanjut biasa)</option>' +
-    steps.map((s,i)=>`<option value="${s.id}">${i+1}. ${escapeHtml(truncate(s.kegiatan,30))}</option>`).join('');
+    steps.map((s,i)=> s.id===editingId ? '' : `<option value="${s.id}">${i+1}. ${escapeHtml(truncate(s.kegiatan,30))}</option>`).join('');
+  if(cur && Array.from(sel.options).some(o=>o.value===cur)) sel.value = cur;
+}
+
+function kosongkanFormLangkah(){
+  document.getElementById('fKegiatan').value='';
+  document.getElementById('fKelengkapan').value='';
+  document.getElementById('fWaktu').value='';
+  document.getElementById('fOutput').value='';
+  document.getElementById('fKet').value='';
+  document.getElementById('fTipe').value='proses';
+  document.getElementById('fTidakTarget').value='';
+  toggleTidakField();
+}
+// ganti tampilan form antara mode "Tambah" dan mode "Edit"
+function tampilkanModeForm(){
+  const edit = editingId!==null;
+  document.getElementById('hFormLangkah').textContent = edit ? 'Edit Langkah' : 'Tambah Langkah';
+  document.getElementById('btnSimpanLangkah').textContent = edit ? 'Simpan Perubahan' : 'Tambah Langkah';
+  document.getElementById('btnBatalEdit').style.display = edit ? 'block' : 'none';
+  const ban = document.getElementById('editBanner');
+  if(edit){
+    const no = steps.findIndex(x=>x.id===editingId)+1;
+    ban.textContent = 'Sedang mengedit langkah ' + no + '. Ubah isinya lalu klik "Simpan Perubahan".';
+    ban.style.display = 'block';
+  } else {
+    ban.style.display = 'none';
+  }
+}
+function editLangkah(id){
+  const s = steps.find(x=>x.id===id);
+  if(!s) return;
+  editingId = id;
+  document.getElementById('fKegiatan').value = s.kegiatan;
+  document.getElementById('fTipe').value = s.tipe;
+  renderPelaksanaSelect();
+  document.getElementById('fPelaksana').value = pelaksanaList.includes(s.pelaksana) ? s.pelaksana : (pelaksanaList[0] || '');
+  document.getElementById('fKelengkapan').value = s.kelengkapan;
+  document.getElementById('fWaktu').value = s.waktu;
+  document.getElementById('fOutput').value = s.output;
+  document.getElementById('fKet').value = s.ket;
+  toggleTidakField();
+  document.getElementById('fTidakTarget').value = s.tidakTarget ? String(s.tidakTarget) : '';
+  tampilkanModeForm();
+  renderListLangkah();
+  const f = document.getElementById('fKegiatan');
+  f.scrollIntoView({behavior:'smooth', block:'center'});
+  f.focus({preventScroll:true});
+}
+function batalEdit(){
+  editingId = null;
+  kosongkanFormLangkah();
+  tampilkanModeForm();
+  renderAll();
 }
 
 function tambahLangkah(){
@@ -721,25 +786,33 @@ function tambahLangkah(){
   const waktu = document.getElementById('fWaktu').value.trim();
   const output = document.getElementById('fOutput').value.trim();
   const ket = document.getElementById('fKet').value.trim();
-  const tidakTarget = tipe==='keputusan' ? (document.getElementById('fTidakTarget').value || null) : null;
+  const tidakVal = tipe==='keputusan' ? document.getElementById('fTidakTarget').value : '';
+  const tidakTarget = tidakVal ? parseInt(tidakVal,10) : null;
 
-  steps.push({
-    id: uid(), kegiatan, tipe, pelaksana, kelengkapan, waktu, output, ket,
-    tidakTarget: tidakTarget ? parseInt(tidakTarget) : null
-  });
+  if(editingId!==null){
+    // mode edit: perbarui langkah di tempat (id & urutan tetap, rujukan "Tidak" dari langkah lain tidak putus)
+    const s = steps.find(x=>x.id===editingId);
+    if(s){
+      Object.assign(s, {kegiatan, tipe, pelaksana, kelengkapan, waktu, output, ket,
+                        tidakTarget: (tidakTarget && tidakTarget!==s.id) ? tidakTarget : null});
+    }
+    editingId = null;
+    kosongkanFormLangkah();
+    tampilkanModeForm();
+    renderAll();
+    return;
+  }
 
-  document.getElementById('fKegiatan').value='';
-  document.getElementById('fKelengkapan').value='';
-  document.getElementById('fWaktu').value='';
-  document.getElementById('fOutput').value='';
-  document.getElementById('fKet').value='';
-  document.getElementById('fTipe').value='proses';
-  toggleTidakField();
+  steps.push({ id: uid(), kegiatan, tipe, pelaksana, kelengkapan, waktu, output, ket, tidakTarget });
+
+  kosongkanFormLangkah();
   renderAll();
 }
 function hapusLangkah(id){
+  if(editingId===id){ editingId = null; kosongkanFormLangkah(); }
   steps = steps.filter(s=>s.id!==id);
   steps.forEach(s=>{ if(s.tidakTarget===id) s.tidakTarget=null; });
+  tampilkanModeForm();
   renderAll();
 }
 function pindahLangkah(id, arah){
@@ -747,6 +820,7 @@ function pindahLangkah(id, arah){
   const j = i+arah;
   if(j<0 || j>=steps.length) return;
   [steps[i],steps[j]] = [steps[j],steps[i]];
+  tampilkanModeForm();
   renderAll();
 }
 
@@ -758,7 +832,7 @@ function renderListLangkah(){
     return;
   }
   wrap.innerHTML = steps.map((s,i)=>{
-    const cls = s.tipe==='keputusan' ? 'keputusan' : '';
+    const cls = (s.tipe==='keputusan' ? 'keputusan' : '') + (s.id===editingId ? ' editing' : '');
     const tipeLabel = {proses:'Proses',keputusan:'Keputusan',mulai:'Mulai',selesai:'Selesai'}[s.tipe];
     let tidakInfo = '';
     if(s.tipe==='keputusan' && s.tidakTarget){
@@ -775,6 +849,7 @@ function renderListLangkah(){
             <span class="sub">${escapeHtml(s.pelaksana)}${tidakInfo}</span>
           </div>
           <div class="step-actions">
+            <button onclick="editLangkah(${s.id})" title="Edit">&#9998;</button>
             <button onclick="pindahLangkah(${s.id},-1)" title="Naik">&uarr;</button>
             <button onclick="pindahLangkah(${s.id},1)" title="Turun">&darr;</button>
             <button onclick="hapusLangkah(${s.id})" title="Hapus" style="color:#a5432f;">&times;</button>
@@ -1048,11 +1123,42 @@ function fileToDataUrl(file){
     reader.readAsDataURL(file);
   });
 }
+// Logo di kop hanya tampil sekitar 46px tinggi (110px lebar), jadi 400x200px sudah tajam bahkan untuk cetak 300 dpi.
+// Gambar yang lebih besar dikecilkan supaya draft (localStorage) tidak cepat penuh. SVG dibiarkan apa adanya (vektor, ringan).
+const LOGO_MAX_W = 400, LOGO_MAX_H = 200;
+function kecilkanLogo(dataUrl, mime){
+  return new Promise(resolve=>{
+    if(mime === 'image/svg+xml'){ resolve(dataUrl); return; }
+    const img = new Image();
+    img.onload = ()=>{
+      const w = img.naturalWidth, h = img.naturalHeight;
+      if(!w || !h){ resolve(dataUrl); return; }
+      const skala = Math.min(1, LOGO_MAX_W/w, LOGO_MAX_H/h);
+      if(skala >= 1){ resolve(dataUrl); return; }   // sudah cukup kecil
+      const cv = document.createElement('canvas');
+      cv.width = Math.max(1, Math.round(w*skala));
+      cv.height = Math.max(1, Math.round(h*skala));
+      const ctx = cv.getContext('2d');
+      const jpeg = (mime === 'image/jpeg');
+      if(jpeg){ ctx.fillStyle = '#fff'; ctx.fillRect(0,0,cv.width,cv.height); }   // JPEG tidak punya transparansi
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, cv.width, cv.height);
+      try{
+        const out = jpeg ? cv.toDataURL('image/jpeg', 0.9) : cv.toDataURL('image/png');   // PNG/WebP -> PNG (transparansi aman)
+        resolve(out.length < dataUrl.length ? out : dataUrl);
+      }catch(err){ resolve(dataUrl); }
+    };
+    img.onerror = ()=>resolve(null);   // bukan gambar yang valid
+    img.src = dataUrl;
+  });
+}
 async function onLogoFileChange(e){
   const file = e.target.files[0];
   if(!file) return;
   try{
-    logoDataUrl = await fileToDataUrl(file);
+    const hasil = await kecilkanLogo(await fileToDataUrl(file), file.type);
+    if(!hasil){ alert('File itu tidak bisa dibaca sebagai gambar. Pakai file PNG, JPG, WebP, atau SVG.'); e.target.value=''; return; }
+    logoDataUrl = hasil;
     renderLogoPreview();
     renderAll();
   }catch(err){
@@ -1113,17 +1219,30 @@ function autosaveDraft(){
     try{
       localStorage.setItem(DRAFT_KEY, JSON.stringify(collectState()));
       const el = document.getElementById('draftStatus');
-      if(el) el.textContent = 'Draft tersimpan otomatis di browser ini — terakhir tersimpan ' + new Date().toLocaleTimeString('id-ID');
-    }catch(e){ /* abaikan kalau localStorage penuh/tidak tersedia */ }
+      if(el){
+        el.textContent = 'Draft tersimpan otomatis di browser ini — terakhir tersimpan ' + new Date().toLocaleTimeString('id-ID');
+        el.style.color = '';
+      }
+    }catch(e){
+      // localStorage penuh / dinonaktifkan (mis. mode privat): jangan diam-diam, beri tahu pengguna
+      const el = document.getElementById('draftStatus');
+      if(el){
+        el.textContent = 'Draft belum tersimpan otomatis (penyimpanan browser penuh atau dinonaktifkan) — klik "Simpan Proyek (.csv)" supaya pekerjaanmu aman.';
+        el.style.color = '#a5432f';
+      }
+    }
   }, 400);
 }
+// true = draft berhasil dipulihkan; false = tidak ada draft / draft rusak (pemanggil harus memakai tampilan awal)
 function restoreDraft(){
   let raw;
-  try{ raw = localStorage.getItem(DRAFT_KEY); }catch(e){ return; }
-  if(!raw) return;
+  try{ raw = localStorage.getItem(DRAFT_KEY); }catch(e){ return false; }
+  if(!raw) return false;
   let data;
-  try{ data = JSON.parse(raw); }catch(e){ return; }
-  applyState(data);
+  try{ data = JSON.parse(raw); }catch(e){ return false; }
+  if(!data || typeof data!=='object') return false;
+  try{ applyState(data); }catch(e){ return false; }
+  return true;
 }
 function applyState(data){
   document.getElementById('inpJudul').value = data.judul || '';
@@ -1152,6 +1271,9 @@ function applyState(data){
   pelaksanaList = (Array.isArray(data.pelaksanaList) && data.pelaksanaList.length) ? data.pelaksanaList : ['Petugas Pelaksana','Kepala Unit'];
   idCounter = 1;
   steps = Array.isArray(data.steps) ? data.steps.map(s=>{ if(s.id>=idCounter) idCounter=s.id+1; return s; }) : [];
+  editingId = null;
+  kosongkanFormLangkah();
+  tampilkanModeForm();
   renderPelaksanaTags();
   renderAll();
 }
@@ -1168,6 +1290,9 @@ function proyekBaru(){
   pelaksanaList = ['Petugas Pelaksana','Kepala Unit'];
   steps = [];
   idCounter = 1;
+  editingId = null;
+  kosongkanFormLangkah();
+  tampilkanModeForm();
 
   logoDataUrl = getDefaultLogo();
 
@@ -1278,10 +1403,12 @@ function applyCsvText(text){
 
 // ---------- init ----------
 function initApp(){
-  const hasDraft = (()=>{ try{ return !!localStorage.getItem(DRAFT_KEY); }catch(e){ return false; } })();
-  if(hasDraft){
-    restoreDraft();
-  } else {
+  if(!restoreDraft()){
+    // tidak ada draft, atau draft rusak -> mulai dari tampilan awal yang bersih
+    pelaksanaList = ["Petugas Pelaksana", "Kepala Unit"];
+    steps = [];
+    idCounter = 1;
+    editingId = null;
     logoDataUrl = getDefaultLogo();
     renderPelaksanaTags();
     renderAll();
