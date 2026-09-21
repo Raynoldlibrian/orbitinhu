@@ -1080,7 +1080,7 @@ function renderIdentitas(){
   const ttePenyelenggara = document.getElementById('inpTtePenyelenggara').value.trim();
   const sigInner = useESign
     ? `<div class="tte-stamp"><span class="lock">&#128274;</span><div><b>Ditandatangani secara elektronik</b>${ttePenyelenggara ? escapeHtml(ttePenyelenggara) : 'Tanda Tangan Elektronik'}${tteKode ? `<div class="code">${escapeHtml(tteKode)}</div>` : ''}</div></div>`
-    : `<span style="color:var(--muted);font-size:10px;">(ruang tanda tangan)</span>`;
+    : `<span style="color:var(--muted);font-size:10px;"></span>`;
   const disahkanCell = (jabatan||nama||nip)
     ? `<div>${jabatan?escapeHtml(jabatan):''}</div><div class="sig-space">${sigInner}</div><div>${nama?escapeHtml(nama):''}</div><div>${nip?'NIP '+escapeHtml(nip):''}</div>`
     : `<span style="color:var(--muted);">Belum diisi</span>`;
