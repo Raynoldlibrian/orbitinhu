@@ -97,44 +97,54 @@
      icon besar di background, dan semua section di bawahnya. */
   .hero-content{
     flex:1; position:relative; z-index:3;
-    display:flex; flex-direction:column; justify-content:center;
-    padding:20px 40px 56px;
+    display:flex; flex-direction:column;
+    padding:20px 40px 32px;
     /* ✏️ AMAN DIUBAH SENDIRI: v2 ini kontennya di-tengah-tengahkan vertikal
        secara sederhana (justify-content:center) karena icon besar yang jadi
        acuan sejajarnya sudah dihapus. Ganti ke flex-start/flex-end kalau mau
        konten nempel atas/bawah, sesuaikan sama kreasi hero baru staf. */
   }
+  /* ✏️ .hero-main bungkus hero-content-wrap & ambil flex:1, jadi konten teks+video
+     tetap ke-tengah-tengahkan persis kayak sebelumnya, SEDANGKAN .hero-stat-grid
+     (sibling di luar .hero-main) otomatis kedorong ke bawah, deket batas bawah hero. */
+  .hero-main{flex:1; display:flex; flex-direction:column; justify-content:center; min-height:0;}
   .hero-content-wrap{
     display:grid; grid-template-columns:1.15fr 1fr; gap:48px; align-items:center;
     max-width:1180px; margin:0 auto; width:100%;
   }
-  /* ✏️ Peta Jabatan: kolom kanan hero berisi statcard ringkasan KESELURUHAN
-     (total se-Kabupaten, bukan per-OPD). Reuse .stat-card yang sudah ada
-     (sama komponen dipakai di .nilai-stat-grid pada template ORBIT lain). */
-  /* ✏️ Statcard KESELURUHAN (total se-Kabupaten) sekarang jadi 1 baris penuh
-     di bawah hero-content-wrap (bukan lagi di kolom kanan — kolom kanan
-     sekarang diisi video animasi). Reuse komponen .stat-card yang sudah ada. */
+  /* ✏️ Statcard KESELURUHAN (total se-Kabupaten) — 1 baris penuh, didorong
+     ke bawah dekat batas hero (lihat .hero-main flex:1 di atas). Reuse .stat-card. */
   .hero-stat-grid{
     display:grid; grid-template-columns:repeat(4, 1fr); gap:14px;
-    max-width:1180px; margin:32px auto 0; width:100%;
+    max-width:1180px; margin:28px auto 0; width:100%; flex-shrink:0;
   }
   .col-left{text-align:left;}
-  .col-right{width:100%; display:flex; align-items:center; justify-content:center;}
+  /* ✏️ justify-content:flex-end -> video digeser ke sisi kanan kolom (dempet ke
+     tepi kanan area konten 1180px), biar nggak numpuk di atas ornamen tengah. */
+  .col-right{width:100%; display:flex; align-items:center; justify-content:flex-end;}
 
-  /* ✏️ Video animasi hero — wrapper kasih background putih persis warna
-     latar hero (--navy-deep) biar nyambung sama background video yang
-     memang nyaris putih, terus mask-image bikin pinggirannya nge-fade
-     lembut (bukan kotak keras) biar makin blend & nggak nutupin ornamen
-     di tepi atas/bawah hero. */
+  /* ✏️ Video animasi hero — transparansi background asli video (dibikin lewat
+     canvas chroma-key di JS, lihat script di bawah), jadi karakter di video
+     "ngambang" langsung di atas latar hero, bukan kotak putih. Wrapper di
+     sini cuma ngatur ukuran & posisi, bukan lagi masking. */
   .hero-video-wrap{
-    position:relative; width:100%; max-width:440px; margin:0 auto;
-    background:var(--navy-deep);
-    -webkit-mask-image:radial-gradient(ellipse 78% 82% at center, #000 62%, transparent 100%);
-    mask-image:radial-gradient(ellipse 78% 82% at center, #000 62%, transparent 100%);
+    position:relative; width:100%; max-width:380px; margin-right:4%;
   }
+  /* ✏️ <video> asli disembunyikan (cuma jadi sumber frame buat canvas di
+     bawahnya) — visibility:hidden (bukan display:none) supaya browser tetap
+     jalanin decode video-nya di background. */
   .hero-video-wrap video{
-    display:block; width:100%; height:auto; max-height:360px; object-fit:contain;
+    position:absolute; inset:0; visibility:hidden; width:100%; height:auto; pointer-events:none;
   }
+  .hero-video-wrap canvas{
+    display:block; width:100%; height:auto; max-height:340px;
+  }
+  .hero-video-wrap .video-fallback-img{
+    display:none; width:100%; height:auto; max-height:340px; object-fit:contain;
+  }
+  /* ✏️ Kalau JS/canvas gagal (browser lama, dsb.), fallback ke poster biasa. */
+  .hero-video-wrap.no-canvas video{position:static; visibility:visible; max-height:340px; object-fit:contain;}
+  .hero-video-wrap.no-canvas canvas{display:none;}
   .hero-opd-search-wrap{position:relative; margin:22px 0 18px; max-width:520px;}
   .stat-value.is-positive{color:var(--status-positive);}
   .stat-value.is-negative{color:var(--status-negative);}
@@ -253,10 +263,11 @@
 
   /* ===== RESPONSIVE ===== */
   @media (max-width:860px){
-    .hero-content{padding:16px 24px 40px;}
+    .hero-content{padding:16px 24px 24px;}
     .hero-content-wrap{grid-template-columns:1fr; gap:32px;}
     .hero-stat-grid{grid-template-columns:1fr 1fr; margin-top:24px;}
-    .hero-video-wrap{max-width:320px;}
+    .hero-video-wrap{max-width:280px; margin:0 auto;}
+    .col-right{justify-content:center;}
     .topbar{padding:20px 24px;}
   }
   @media (max-width:480px){
@@ -751,6 +762,7 @@
 
   <div class="hero-content hero-content-simple">
     <img class="ornamen-atas" src="images/cengkeh-hero.png" alt="" aria-hidden="true">
+    <div class="hero-main">
     <div class="hero-content-wrap">
     <div class="col-left">
       <!-- ✏️ AMAN DIUBAH SENDIRI: eyebrow, judul <h1>, dan tagline hero. -->
@@ -784,12 +796,15 @@
          (images/) — taruh peta-animasi.mp4 & peta-animasi.webm di folder
          videos/ repo, dan poster-nya di images/. -->
     <div class="col-right">
-      <div class="hero-video-wrap">
-        <video autoplay muted loop playsinline preload="metadata" poster="images/peta-animasi-poster.jpg" aria-label="Animasi ilustrasi peta jabatan">
+      <div class="hero-video-wrap" id="heroVideoWrap">
+        <video id="heroVideoSrc" autoplay muted loop playsinline preload="auto" aria-hidden="true">
           <source src="videos/peta-animasi.webm" type="video/webm">
           <source src="videos/peta-animasi.mp4" type="video/mp4">
         </video>
+        <canvas id="heroVideoCanvas" aria-label="Animasi ilustrasi peta jabatan"></canvas>
+        <img class="video-fallback-img" src="images/peta-animasi-poster.jpg" alt="Animasi ilustrasi peta jabatan">
       </div>
+    </div>
     </div>
     </div>
 
@@ -952,9 +967,76 @@
   }
 
   /* ============================================================
-     ✏️ v2: hero section kosong dari animasi/icon background — silakan
-     staf isi sendiri (foto, ilustrasi, dsb) sesuai kreasi masing-masing.
-     ============================================================ */
+     HERO VIDEO — transparansi background lewat canvas chroma-key.
+     <video> asli disembunyikan (cuma sumber frame), tiap frame digambar
+     ke <canvas> lalu piksel yang mirip warna background video (nyaris
+     putih, ~rgb 240,242,244) dibikin transparan (alpha 0), dengan
+     feathering tipis di tepi biar nggak jaggy. Hasilnya karakter di
+     video "ngambang" langsung di atas latar hero, bukan kotak video biasa.
+     Kalau canvas/video gagal (browser lama dsb.), otomatis fallback ke
+     gambar poster statis (.no-canvas). ============================= */
+  (function initHeroVideoChromaKey(){
+    const wrap = document.getElementById('heroVideoWrap');
+    const video = document.getElementById('heroVideoSrc');
+    const canvas = document.getElementById('heroVideoCanvas');
+    if (!wrap || !video || !canvas || !canvas.getContext){
+      if (wrap) wrap.classList.add('no-canvas');
+      return;
+    }
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+    // ✏️ Warna background asli video (disampling dari frame video-nya) +
+    // ambang batas jarak warna buat nentuin mana yang dianggap "background".
+    const BG = [241, 242, 244];
+    const THRESHOLD = 40;   // di bawah ini: background, dibikin transparan penuh
+    const FEATHER = 28;     // di atas THRESHOLD s/d +FEATHER: transisi halus (anti jaggy)
+
+    let rafId = null;
+    let ready = false;
+
+    function resizeCanvas(){
+      const w = video.videoWidth, h = video.videoHeight;
+      if (!w || !h) return;
+      canvas.width = w;
+      canvas.height = h;
+    }
+
+    function renderFrame(){
+      if (video.readyState >= 2 && canvas.width){
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        try {
+          const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = frame.data;
+          for (let i = 0; i < data.length; i += 4){
+            const dr = data[i] - BG[0], dg = data[i+1] - BG[1], db = data[i+2] - BG[2];
+            const dist = Math.sqrt(dr*dr + dg*dg + db*db);
+            if (dist < THRESHOLD){
+              data[i+3] = 0;
+            } else if (dist < THRESHOLD + FEATHER){
+              data[i+3] = Math.round(255 * (dist - THRESHOLD) / FEATHER);
+            }
+          }
+          ctx.putImageData(frame, 0, 0);
+        } catch (e){
+          // canvas "tainted" (misalnya video di-load dari file:// tanpa server) → fallback
+          wrap.classList.add('no-canvas');
+          if (rafId) cancelAnimationFrame(rafId);
+          return;
+        }
+      }
+      rafId = requestAnimationFrame(renderFrame);
+    }
+
+    video.addEventListener('loadedmetadata', resizeCanvas);
+    video.addEventListener('playing', () => {
+      if (!ready){ ready = true; resizeCanvas(); renderFrame(); }
+    });
+    video.addEventListener('error', () => wrap.classList.add('no-canvas'));
+
+    // Safety: kalau video nggak pernah mulai play (autoplay diblokir dsb.), fallback.
+    setTimeout(() => { if (!ready) wrap.classList.add('no-canvas'); }, 2500);
+  })();
+
 
   /* ============================================================
      PETA JABATAN — pemuatan data & statcard ringkasan hero.
