@@ -225,6 +225,14 @@
   table.bagan td.kegiatan-cell{text-align:left;padding:6px 8px;line-height:1.3;}
   table.bagan td.no-cell{font-weight:700;color:var(--muted);}
   table.bagan td.pelaksana-cell{position:relative;height:52px;}
+  /* baris berisi belah ketupat (keputusan) dibuat lebih tinggi supaya panah masuk, label Ya/Tidak, dan garis belok punya ruang
+     dan tidak menumpuk di batas baris (belah ketupat 45px + ruang panah di atas + label di bawah) */
+  table.bagan tr.dec td.pelaksana-cell{height:74px;}
+  /* jaring pengaman: kalau ada kata yang lebih panjang dari kolomnya, dipotong di batas kolom, tidak menabrak kolom sebelah */
+  table.bagan th, table.bagan td{overflow-wrap:anywhere;}
+  /* kolom data (Mutu Baku + Ket) dan judul kolom pelaksana/Mutu Baku: font lebih kecil agar muat di kertas */
+  table.bagan td.mb{font-size:10px; line-height:1.25; padding:4px 3px;}
+  table.bagan thead th.sub{font-size:9.5px; padding:5px 1px; line-height:1.2;}
   .shape-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;}
   .shape{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#1c1a16;background:#DFE7F1;border:1.4px solid var(--ink);}
   .shape.proses{width:40px;height:22px;border-radius:4px;}
@@ -897,6 +905,10 @@ function switchTab(name){
 // Konektor (panah) digambar LANGSUNG di dalam sel tabel dengan posisi relatif (%, px kecil), bukan lapisan SVG yang
 // diukur dari layar. Akibatnya garis selalu pas di lebar berapa pun (layar, cetak, ukuran/orientasi kertas apa pun),
 // tidak perlu digambar ulang saat jendela diubah, dan ikut terpotong rapi kalau bagan pindah halaman cetak.
+// teks sel bagan: escape HTML + beri titik potong baris setelah "/" (mis. Ranperkada/Ranperda) — tidak disimpan ke data/CSV
+function pecah(str){
+  return escapeHtml(String(str==null ? '' : str).replace(/\//g, '/\u200B'));
+}
 const SHAPE_DIM = { proses:{w:40,h:22}, keputusan:{w:45.25,h:45.25}, mulai:{w:52,h:24}, selesai:{w:52,h:24} };
 const JOG_BAWAH = 4;     // tinggi garis belok mendatar dari batas bawah baris (px)
 
@@ -924,7 +936,11 @@ function bangunKonektor(nCols){
     }
     ov[i+1][cb] += box('v', `top:0;bottom:calc(50% + ${hb/2+13.9}px)`);
     ov[i+1][cb] += box('ad', `top:calc(50% - ${hb/2+14.4}px)`);
-    if(a.tipe==='keputusan') ov[i][ca] += box('lbl ya', `left:calc(50% + 6px);top:calc(50% + ${ha/2+3}px)`, 'Ya');
+    if(a.tipe==='keputusan'){
+      // label "Ya" di sisi yang tidak dilewati garis belok (garis belok ke kanan -> label di kiri, dan sebaliknya)
+      const sisiKiri = (ca!==cb && cb>ca);
+      ov[i][ca] += box('lbl ya', `${sisiKiri ? 'right' : 'left'}:calc(50% + 6px);top:calc(50% + ${ha/2+1}px)`, 'Ya');
+    }
   }
 
   // jalur balik "Tidak": dari sisi kanan keputusan -> jalur vertikal di tepi kanan area PELAKSANA -> sisi kanan langkah tujuan
@@ -982,7 +998,7 @@ function renderPaper(){
 
   const nP = pelaksanaList.length;
   const ov = bangunKonektor(6 + nP);   // kolom: No, Kegiatan, [pelaksana...], Kelengkapan, Waktu, Output, Ket
-  const colHeaders = pelaksanaList.map(p=>`<th>${escapeHtml(p)}</th>`).join('');
+  const colHeaders = pelaksanaList.map(p=>`<th class="sub">${pecah(p)}</th>`).join('');
   const rows = steps.map((s,i)=>{
     const pelaksanaCells = pelaksanaList.map((p,k)=>{
       if(s.pelaksana!==p) return `<td class="pelaksana-cell">${ov[i][k+2]}</td>`;
@@ -994,14 +1010,14 @@ function renderPaper(){
         </div>${ov[i][k+2]}
       </td>`;
     }).join('');
-    return `<tr>
+    return `<tr${s.tipe==='keputusan' ? ' class="dec"' : ''}>
       <td class="no-cell">${i+1}${ov[i][0]}</td>
-      <td class="kegiatan-cell">${escapeHtml(s.kegiatan)}${ov[i][1]}</td>
+      <td class="kegiatan-cell">${pecah(s.kegiatan)}${ov[i][1]}</td>
       ${pelaksanaCells}
-      <td>${escapeHtml(s.kelengkapan)}${ov[i][2+nP]}</td>
-      <td>${escapeHtml(s.waktu)}${ov[i][3+nP]}</td>
-      <td>${escapeHtml(s.output)}${ov[i][4+nP]}</td>
-      <td>${escapeHtml(s.ket)}${ov[i][5+nP]}</td>
+      <td class="mb">${pecah(s.kelengkapan)}${ov[i][2+nP]}</td>
+      <td class="mb">${pecah(s.waktu)}${ov[i][3+nP]}</td>
+      <td class="mb">${pecah(s.output)}${ov[i][4+nP]}</td>
+      <td class="mb">${pecah(s.ket)}${ov[i][5+nP]}</td>
     </tr>`;
   }).join('');
 
@@ -1010,19 +1026,24 @@ function renderPaper(){
     <div class="sub-title">${escapeHtml(judul)}${unit ? ' — '+escapeHtml(unit):''}${nomor ? ' · No. '+escapeHtml(nomor):''}</div>
     <div class="diagram-container" id="diagramContainer">
       <table class="bagan" id="baganTable">
+        <colgroup>
+          <col style="width:28px;"><col style="width:21%;">
+          ${pelaksanaList.map(()=>'<col>').join('')}
+          <col style="width:10%;"><col style="width:7%;"><col style="width:11%;"><col style="width:7%;">
+        </colgroup>
         <thead>
           <tr>
-            <th rowspan="2" style="width:26px;">No</th>
-            <th rowspan="2" style="width:26%;">Kegiatan</th>
+            <th rowspan="2" class="sub">No</th>
+            <th rowspan="2">Kegiatan</th>
             <th colspan="${pelaksanaList.length}">Pelaksana</th>
             <th colspan="3">Mutu Baku</th>
-            <th rowspan="2" style="width:9%;">Ket</th>
+            <th rowspan="2">Ket</th>
           </tr>
           <tr>
             ${colHeaders}
-            <th style="width:9%;">Kelengkapan</th>
-            <th style="width:8%;">Waktu</th>
-            <th style="width:11%;">Output</th>
+            <th class="sub">Kelengkapan</th>
+            <th class="sub">Waktu</th>
+            <th class="sub">Output</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
