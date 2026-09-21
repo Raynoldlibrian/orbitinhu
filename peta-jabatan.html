@@ -111,9 +111,30 @@
   /* ✏️ Peta Jabatan: kolom kanan hero berisi statcard ringkasan KESELURUHAN
      (total se-Kabupaten, bukan per-OPD). Reuse .stat-card yang sudah ada
      (sama komponen dipakai di .nilai-stat-grid pada template ORBIT lain). */
-  .hero-stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  /* ✏️ Statcard KESELURUHAN (total se-Kabupaten) sekarang jadi 1 baris penuh
+     di bawah hero-content-wrap (bukan lagi di kolom kanan — kolom kanan
+     sekarang diisi video animasi). Reuse komponen .stat-card yang sudah ada. */
+  .hero-stat-grid{
+    display:grid; grid-template-columns:repeat(4, 1fr); gap:14px;
+    max-width:1180px; margin:32px auto 0; width:100%;
+  }
   .col-left{text-align:left;}
-  .col-right{width:100%;}
+  .col-right{width:100%; display:flex; align-items:center; justify-content:center;}
+
+  /* ✏️ Video animasi hero — wrapper kasih background putih persis warna
+     latar hero (--navy-deep) biar nyambung sama background video yang
+     memang nyaris putih, terus mask-image bikin pinggirannya nge-fade
+     lembut (bukan kotak keras) biar makin blend & nggak nutupin ornamen
+     di tepi atas/bawah hero. */
+  .hero-video-wrap{
+    position:relative; width:100%; max-width:440px; margin:0 auto;
+    background:var(--navy-deep);
+    -webkit-mask-image:radial-gradient(ellipse 78% 82% at center, #000 62%, transparent 100%);
+    mask-image:radial-gradient(ellipse 78% 82% at center, #000 62%, transparent 100%);
+  }
+  .hero-video-wrap video{
+    display:block; width:100%; height:auto; max-height:360px; object-fit:contain;
+  }
   .hero-opd-search-wrap{position:relative; margin:22px 0 18px; max-width:520px;}
   .stat-value.is-positive{color:var(--status-positive);}
   .stat-value.is-negative{color:var(--status-negative);}
@@ -234,6 +255,8 @@
   @media (max-width:860px){
     .hero-content{padding:16px 24px 40px;}
     .hero-content-wrap{grid-template-columns:1fr; gap:32px;}
+    .hero-stat-grid{grid-template-columns:1fr 1fr; margin-top:24px;}
+    .hero-video-wrap{max-width:320px;}
     .topbar{padding:20px 24px;}
   }
   @media (max-width:480px){
@@ -756,33 +779,43 @@
       </div>
     </div>
 
-    <!-- ✏️ Kolom kanan hero: statcard ringkasan KESELURUHAN (total se-Kabupaten,
-         bukan per-OPD — ini beda sama filter tabel di bawah nanti). Reuse
-         komponen .stat-card yang sudah ada di template ORBIT. -->
+    <!-- ✏️ Kolom kanan hero: video animasi. File video ditaruh terpisah
+         (bukan di-embed base64) mengikuti pola folder assets yang sudah ada
+         (images/) — taruh peta-animasi.mp4 & peta-animasi.webm di folder
+         videos/ repo, dan poster-nya di images/. -->
     <div class="col-right">
-      <div class="hero-stat-grid" id="heroStatGrid">
-        <div class="stat-card">
-          <div class="stat-label">Total Jabatan</div>
-          <div class="stat-value" id="statTotalJabatan">–</div>
-          <div class="stat-meta">seluruh OPD</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Total Bezetting</div>
-          <div class="stat-value" id="statTotalB">–</div>
-          <div class="stat-meta">terisi saat ini</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Total Kebutuhan</div>
-          <div class="stat-value" id="statTotalK">–</div>
-          <div class="stat-meta">sesuai analisis jabatan</div>
-        </div>
-        <div class="stat-card" id="statGapCard">
-          <div class="stat-label">Total +/-</div>
-          <div class="stat-value" id="statTotalGap">–</div>
-          <div class="stat-meta" id="statMeta">memuat data…</div>
-        </div>
+      <div class="hero-video-wrap">
+        <video autoplay muted loop playsinline preload="metadata" poster="images/peta-animasi-poster.jpg" aria-label="Animasi ilustrasi peta jabatan">
+          <source src="videos/peta-animasi.webm" type="video/webm">
+          <source src="videos/peta-animasi.mp4" type="video/mp4">
+        </video>
       </div>
     </div>
+    </div>
+
+    <!-- ✏️ Statcard ringkasan KESELURUHAN (total se-Kabupaten, bukan per-OPD)
+         — sekarang 1 baris penuh di bawah hero-content-wrap. Reuse .stat-card. -->
+    <div class="hero-stat-grid" id="heroStatGrid">
+      <div class="stat-card">
+        <div class="stat-label">Total Jabatan</div>
+        <div class="stat-value" id="statTotalJabatan">–</div>
+        <div class="stat-meta">seluruh OPD</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Bezetting</div>
+        <div class="stat-value" id="statTotalB">–</div>
+        <div class="stat-meta">terisi saat ini</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Kebutuhan</div>
+        <div class="stat-value" id="statTotalK">–</div>
+        <div class="stat-meta">sesuai analisis jabatan</div>
+      </div>
+      <div class="stat-card" id="statGapCard">
+        <div class="stat-label">Total +/-</div>
+        <div class="stat-value" id="statTotalGap">–</div>
+        <div class="stat-meta" id="statMeta">memuat data…</div>
+      </div>
     </div>
 
   </div>
