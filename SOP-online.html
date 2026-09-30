@@ -223,7 +223,7 @@
   table.bagan th,table.bagan td{border:1px solid #444;padding:5px 6px;vertical-align:middle;text-align:center;}
   table.bagan thead th{background:#F5F1E9;font-weight:700;font-size:11px;}
   table.bagan td.kegiatan-cell{text-align:left;padding:6px 8px;line-height:1.3;}
-  table.bagan td.no-cell{font-weight:700;color:var(--muted);}
+  table.bagan td.no-cell{font-weight:700;color:var(--muted);white-space:nowrap;}
   table.bagan td.pelaksana-cell{position:relative;height:52px;}
   /* baris berisi belah ketupat (keputusan) dibuat lebih tinggi supaya panah masuk, label Ya/Tidak, dan garis belok punya ruang
      dan tidak menumpuk di batas baris (belah ketupat 45px + ruang panah di atas + label di bawah) */
@@ -283,6 +283,7 @@
   @media (max-width:860px){ .hero-content{--hero-turun:3vh;} }
   button.hero-quicklink{font-family:inherit; cursor:pointer;}
   .hero-status{margin-top:16px; font-size:.78rem; color:var(--muted);}
+  .a4-note{margin:8px 0 0; font-size:.72rem; color:var(--muted); opacity:.85;}
   .editor-tabs{margin-bottom:24px;}
   /* ===== KONEKTOR BAGAN ALIR (panah) — elemen .cx di dalam sel tabel, posisinya relatif terhadap sel =====
      Warna & ketebalan: ubah --cx (panah biasa #1F3A5F, jalur "Tidak" #a5432f) dan angka 1.4px.
@@ -371,6 +372,19 @@
   .step-actions button:hover{background:var(--glass-fill-strong);}
   .preview-stack{display:flex; flex-direction:column; gap:40px;}
   #prevBagan{order:1;} #prevIdentitas{order:2;}   /* tampilan layar: bagan alir di atas */
+
+  /* ===== Segilima / Off-Page Connector (Permenpan RB No. 35/2012) =====
+     Dipakai HANYA saat bagan otomatis terpotong ke halaman cetak berikutnya (kertas dikunci A4 lanskap).
+     Nomor di dalamnya memasangkan ujung bawah halaman ini dengan ujung atas halaman berikutnya. */
+  .cx.conn{
+    width:16px; height:13px; clip-path:polygon(50% 0%,100% 38%,82% 100%,18% 100%,0% 38%);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-size:7.5px; font-weight:700; background:var(--teal-700); line-height:1;
+  }
+  .cx.conn.t{background:#a5432f;}
+  /* pemisah antar-halaman bagan alir: di layar berupa garis putus + label; di cetak jadi pemotong halaman murni */
+  .page-sep{display:flex; align-items:center; gap:8px; margin:22px 0; color:var(--stone-600); font-size:10.5px;}
+  .page-sep::before,.page-sep::after{content:''; flex:1; border-top:1px dashed var(--stone-300);}
   .paper-scroll{overflow-x:auto; padding:2px;}
   .paper{max-width:none; width:100%; color:#16233A;}
   .preview-toolbar{margin-bottom:12px;}
@@ -386,7 +400,7 @@
     /* margin @page = 0 supaya header/footer bawaan browser (judul, alamat halaman, nomor halaman, tanggal)
        tidak tercetak. Jarak tepi kertas dibuat lewat padding .section-penjelasan yang diulang di setiap halaman
        (box-decoration-break:clone). Ubah angka 10mm 9mm = atas-bawah & kiri-kanan. */
-    @page{size:landscape; margin:0;}   /* landscape = orientasi kertas selalu mendatar (ukuran kertas ikut pilihan/default printer) */
+    @page{size:A4 landscape; margin:0;}   /* dikunci A4 — perhitungan potongan halaman & segilima penyambung memakai ukuran ini */
     html,body{background:#fff !important;}
     .hero,.section-galeri,.site-footer,.preview-toolbar,.penjelasan-head,.ornamen-atas,.ornamen-bawah{display:none !important;}
     .section-penjelasan{padding:10mm 9mm; -webkit-box-decoration-break:clone; box-decoration-break:clone;}
@@ -405,6 +419,11 @@
     /* bagan > 1 halaman: dipotong per langkah (baris tidak dibelah), judul kolom diulang di halaman berikutnya */
     table.bagan thead{display:table-header-group;}
     table.bagan tr{break-inside:avoid; page-break-inside:avoid;}
+    /* potongan halaman bagan alir kini ditentukan oleh JS (paginasiBagan), bukan oleh browser — .page-sep
+       menandai tempatnya; kontennya sendiri disembunyikan supaya tidak ikut tercetak */
+    .page-sep{break-before:page; page-break-before:always; height:0; margin:0; padding:0; border:0; overflow:hidden;}
+    .page-sep::before,.page-sep::after{content:none;}
+    .page-sep span{display:none;}
     .paper h3,.paper .sub-title{break-after:avoid; page-break-after:avoid;}
   }
 </style>
@@ -444,6 +463,7 @@
         <input type="file" id="fileCsv" accept=".csv" onchange="onImportCsv(event)" hidden>
       </div>
       <div class="hero-status" id="draftStatus">Susun bagan alir &amp; identitas SOP otomatis — draft tersimpan otomatis di browser ini</div>
+      <p class="a4-note">Kertas cetak: <b>A4</b> — supaya nomor segilima penyambung halaman presisi saat bagan lebih dari 1 lembar.</p>
     </div>
     <!-- ✏️ AMAN DIUBAH SENDIRI: animasi hero (kolom kanan). Ganti file video (.mp4 & .webm) dan poster di folder
          images/ dengan nama yang sama. Video sengaja tanpa suara supaya bisa jalan otomatis di semua browser. -->
@@ -915,18 +935,145 @@ function pecah(str){
 const SHAPE_DIM = { proses:{w:40,h:22}, keputusan:{w:45.25,h:45.25}, mulai:{w:52,h:24}, selesai:{w:52,h:24} };
 const JOG_BAWAH = 4;     // tinggi garis belok mendatar dari batas bawah baris (px)
 
-function bangunKonektor(nCols){
+// ===== Potongan halaman bagan alir (kertas dikunci A4 lanskap) =====
+// Ukuran mm di bawah harus sama dengan `#pratinjau{padding:10mm 9mm}` di CSS, karena itulah jarak tepi
+// yang benar-benar dipakai saat mencetak.
+const A4_MM = { w:297, h:210 };
+const PRINT_PAD_MM = { x:9, y:10 };
+let _pagePxCache = null;
+function ukuranHalamanPx(){
+  if(_pagePxCache) return _pagePxCache;
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position:fixed;left:-99999px;top:0;visibility:hidden;pointer-events:none;margin:0;';
+  probe.innerHTML = `<div style="width:${A4_MM.w - PRINT_PAD_MM.x*2}mm;"></div><div style="width:1px;height:${A4_MM.h - PRINT_PAD_MM.y*2}mm;"></div>`;
+  document.body.appendChild(probe);
+  const w = probe.children[0].getBoundingClientRect().width;
+  const h = probe.children[1].getBoundingClientRect().height;
+  document.body.removeChild(probe);
+  _pagePxCache = { w, h };
+  return _pagePxCache;
+}
+function kolomOf(s){ const k = pelaksanaList.indexOf(s.pelaksana); return k<0 ? -1 : k+2; }
+function colgroupHtml(){
+  return `<colgroup>
+    <col style="width:28px;"><col style="width:21%;">
+    ${pelaksanaList.map(()=>'<col>').join('')}
+    <col style="width:10%;"><col style="width:7%;"><col style="width:11%;"><col style="width:7%;">
+  </colgroup>`;
+}
+function theadHtml(colHeaders){
+  return `<thead>
+    <tr>
+      <th rowspan="2" class="sub">No</th>
+      <th rowspan="2">Kegiatan</th>
+      <th colspan="${pelaksanaList.length}">Pelaksana</th>
+      <th colspan="3">Mutu Baku</th>
+      <th rowspan="2">Ket</th>
+    </tr>
+    <tr>
+      ${colHeaders}
+      <th class="sub">Kelengkapan</th>
+      <th class="sub">Waktu</th>
+      <th class="sub">Output</th>
+    </tr>
+  </thead>`;
+}
+function rowHtml(s,i,ov,nP){
+  const pelaksanaCells = pelaksanaList.map((p,k)=>{
+    if(s.pelaksana!==p) return `<td class="pelaksana-cell">${ov[i][k+2]}</td>`;
+    const shapeClass = SHAPE_DIM[s.tipe] ? s.tipe : 'proses';
+    const label = (s.tipe==='mulai') ? 'Mulai' : (s.tipe==='selesai') ? 'Selesai' : String(i+1);
+    return `<td class="pelaksana-cell" data-step-id="${s.id}">
+      <div class="shape-wrap">
+        <div class="shape ${shapeClass}" data-shape-id="${s.id}"><span>${label}</span></div>
+      </div>${ov[i][k+2]}
+    </td>`;
+  }).join('');
+  return `<tr${s.tipe==='keputusan' ? ' class="dec"' : ''}>
+    <td class="no-cell">${i+1}${ov[i][0]}</td>
+    <td class="kegiatan-cell">${pecah(s.kegiatan)}${ov[i][1]}</td>
+    ${pelaksanaCells}
+    <td class="mb">${pecah(s.kelengkapan)}${ov[i][2+nP]}</td>
+    <td class="mb">${pecah(s.waktu)}${ov[i][3+nP]}</td>
+    <td class="mb">${pecah(s.output)}${ov[i][4+nP]}</td>
+    <td class="mb">${pecah(s.ket)}${ov[i][5+nP]}</td>
+  </tr>`;
+}
+// lintasan pengukuran: render judul+thead+semua baris (tanpa konektor — konektor hanya lapisan absolut,
+// tidak mempengaruhi tinggi) di lebar kertas A4 sesungguhnya, supaya pembungkusan teks & tinggi baris
+// yang terukur sama persis dengan hasil cetak.
+function ukurTinggiBagan(judul, unit, nomor, colHeaders, rowsHtmlArr){
+  const { w:CW } = ukuranHalamanPx();
+  const probe = document.createElement('div');
+  probe.className = 'paper';
+  probe.style.cssText = `position:fixed;left:-99999px;top:0;visibility:hidden;pointer-events:none;margin:0;width:${CW}px;padding:0;border:none;min-width:0;max-width:none;box-shadow:none;`;
+  probe.innerHTML = `<h3>BAGAN ALIR SOP</h3><div class="sub-title">${escapeHtml(judul)}${unit?' — '+escapeHtml(unit):''}${nomor?' · No. '+escapeHtml(nomor):''}</div>
+    <table class="bagan">${colgroupHtml()}${theadHtml(colHeaders)}<tbody>${rowsHtmlArr.join('')}</tbody></table>`;
+  document.body.appendChild(probe);
+  const table = probe.querySelector('table');
+  const theadH = table.tHead.getBoundingClientRect().height;
+  const headingH = table.getBoundingClientRect().top - probe.getBoundingClientRect().top;
+  const rowH = [...table.tBodies[0].rows].map(tr=>tr.getBoundingClientRect().height);
+  document.body.removeChild(probe);
+  return { headingH, theadH, rowH };
+}
+// kelompokkan baris ke halaman: halaman pertama diawali judul+thead, halaman berikutnya diawali thead saja
+function paginasiBagan(headingH, theadH, rowH){
+  const { h:PH } = ukuranHalamanPx();
+  const pageOf = [];
+  let page = 0, used = headingH + theadH, adaDiHalaman = 0;
+  for(let i=0;i<rowH.length;i++){
+    if(adaDiHalaman>0 && used + rowH[i] > PH){ page++; used = theadH; adaDiHalaman = 0; }
+    pageOf.push(page);
+    used += rowH[i];
+    adaDiHalaman++;
+  }
+  return pageOf;
+}
+
+function bangunKonektor(nCols, pageOf){
   const nRows = steps.length, last = nCols-1;
   const ov = Array.from({length:nRows}, ()=>Array(nCols).fill(''));
   const dim = s => SHAPE_DIM[s.tipe] || SHAPE_DIM.proses;
-  const kolom = s => { const k = pelaksanaList.indexOf(s.pelaksana); return k<0 ? -1 : k+2; };
+  const kolom = kolomOf;
   const box = (cls, style, txt) => `<b class="cx ${cls}" style="${style}">${txt||''}</b>`;
+  const pent = (cls, style, num) => `<b class="cx conn ${cls}" style="${style}">${num}</b>`;
+  const beda = (x,y) => pageOf && pageOf[x]!==pageOf[y];
+  let noSambung = 0;
+  // segilima keluar (dasar halaman ini) & masuk (puncak halaman berikutnya) — Off-Page Connector,
+  // Permenpan RB No. 35/2012, dipakai hanya saat panah semestinya melintasi batas halaman cetak
+  const PENT = 13;   // tinggi segilima (px) — dipakai untuk menghitung sisa ruang garis panah di sisi masuk
+  const keluar = (row,col,num,w,isTidak,clsT) => {
+    if(isTidak){
+      // pojok kanan-bawah sel: area ini selalu kosong (di luar bounding box belah ketupat maupun label
+      // "Ya"/garis alur utama yang sama-sama memakai bagian tengah sel), jadi aman dari tumpang tindih
+      // apa pun lebar kolom pelaksananya. Tanpa teks "Tidak" terpisah — warna merah + nomor sudah cukup.
+      ov[row][col] += pent(clsT, `right:2px;bottom:2px;`, num);
+    } else {
+      ov[row][col] += pent('', `left:calc(50% - 8px);bottom:0;`, num);
+    }
+  };
+  const masuk = (row,col,num,h,clsT) => {
+    ov[row][col] += pent(clsT||'', `left:calc(50% - 8px);top:0;`, num);
+    ov[row][col] += box('v'+(clsT?' '+clsT:''), `top:${PENT}px;bottom:calc(50% + ${h/2+13.9-PENT}px)`);
+    ov[row][col] += box('ad'+(clsT?' '+clsT:''), `top:calc(50% - ${h/2+14.4}px)`);
+  };
 
   // alur biasa: langkah i -> i+1
   for(let i=0;i<nRows-1;i++){
     const a = steps[i], b = steps[i+1], ca = kolom(a), cb = kolom(b);
     if(ca<0 || cb<0) continue;
     const ha = dim(a).h, hb = dim(b).h;
+    if(beda(i,i+1)){
+      noSambung++;
+      keluar(i,ca,noSambung,dim(a).w,false);
+      masuk(i+1,cb,noSambung,hb);
+      if(a.tipe==='keputusan'){
+        const sisiKiri = (ca!==cb && cb>ca);
+        ov[i][ca] += box('lbl ya', `${sisiKiri ? 'right' : 'left'}:calc(50% + 6px);top:calc(50% + ${ha/2+1}px)`, 'Ya');
+      }
+      continue;
+    }
     if(ca===cb){
       ov[i][ca] += box('v', `top:calc(50% + ${ha/2}px);bottom:0`);
     } else {
@@ -957,6 +1104,12 @@ function bangunKonektor(nCols){
     const cs = kolom(s), ct = kolom(steps[j]);
     if(cs<0 || ct<0) return;
     const ws = dim(s).w, wt = dim(steps[j]).w;
+    if(beda(i,j)){
+      noSambung++;
+      keluar(i,cs,noSambung,ws,true,'t');
+      masuk(j,ct,noSambung,dim(steps[j]).h,'t');
+      return;
+    }
     const mid = 'top:calc(50% - .7px)', naik = j<i;
     // keluar dari sisi kanan keputusan
     if(cs<lastP){
@@ -1000,57 +1153,38 @@ function renderPaper(){
   }
 
   const nP = pelaksanaList.length;
-  const ov = bangunKonektor(6 + nP);   // kolom: No, Kegiatan, [pelaksana...], Kelengkapan, Waktu, Output, Ket
+  const nCols = 6 + nP;   // kolom: No, Kegiatan, [pelaksana...], Kelengkapan, Waktu, Output, Ket
   const colHeaders = pelaksanaList.map(p=>`<th class="sub">${pecah(p)}</th>`).join('');
-  const rows = steps.map((s,i)=>{
-    const pelaksanaCells = pelaksanaList.map((p,k)=>{
-      if(s.pelaksana!==p) return `<td class="pelaksana-cell">${ov[i][k+2]}</td>`;
-      const shapeClass = SHAPE_DIM[s.tipe] ? s.tipe : 'proses';
-      const label = (s.tipe==='mulai') ? 'Mulai' : (s.tipe==='selesai') ? 'Selesai' : String(i+1);
-      return `<td class="pelaksana-cell" data-step-id="${s.id}">
-        <div class="shape-wrap">
-          <div class="shape ${shapeClass}" data-shape-id="${s.id}"><span>${label}</span></div>
-        </div>${ov[i][k+2]}
-      </td>`;
-    }).join('');
-    return `<tr${s.tipe==='keputusan' ? ' class="dec"' : ''}>
-      <td class="no-cell">${i+1}${ov[i][0]}</td>
-      <td class="kegiatan-cell">${pecah(s.kegiatan)}${ov[i][1]}</td>
-      ${pelaksanaCells}
-      <td class="mb">${pecah(s.kelengkapan)}${ov[i][2+nP]}</td>
-      <td class="mb">${pecah(s.waktu)}${ov[i][3+nP]}</td>
-      <td class="mb">${pecah(s.output)}${ov[i][4+nP]}</td>
-      <td class="mb">${pecah(s.ket)}${ov[i][5+nP]}</td>
-    </tr>`;
-  }).join('');
+
+  // lintasan 1: ukur tinggi tiap baris di lebar kertas A4 sesungguhnya (tanpa konektor — konektor cuma
+  // lapisan absolut, tidak mempengaruhi tinggi) untuk menentukan di baris mana halaman akan terpotong
+  const ovKosong = Array.from({length:steps.length}, ()=>Array(nCols).fill(''));
+  const rowsUkur = steps.map((s,i)=>rowHtml(s,i,ovKosong,nP));
+  const { headingH, theadH, rowH } = ukurTinggiBagan(judul, unit, nomor, colHeaders, rowsUkur);
+  const pageOf = paginasiBagan(headingH, theadH, rowH);
+  const totalHalaman = pageOf[pageOf.length-1] + 1;
+
+  // lintasan 2: bangun konektor sesungguhnya — kalau bagan lebih dari 1 halaman, panah yang melintasi
+  // batas halaman diganti simbol segilima (Off-Page Connector, Permenpan RB No. 35/2012)
+  const ov = bangunKonektor(nCols, totalHalaman>1 ? pageOf : null);
+  const rows = steps.map((s,i)=>rowHtml(s,i,ov,nP));
+
+  const tablesHtml = [];
+  for(let p=0;p<totalHalaman;p++){
+    const rowsHalIni = rows.filter((_,i)=>pageOf[i]===p).join('');
+    tablesHtml.push(`${p>0 ? `<div class="page-sep"><span>Bersambung ke halaman ${p+1}</span></div>` : ''}
+      <table class="bagan"${p===0?' id="baganTable"':''}>
+        ${colgroupHtml()}
+        ${theadHtml(colHeaders)}
+        <tbody>${rowsHalIni}</tbody>
+      </table>`);
+  }
 
   paper.innerHTML = `
     <h3>BAGAN ALIR SOP</h3>
     <div class="sub-title">${escapeHtml(judul)}${unit ? ' — '+escapeHtml(unit):''}${nomor ? ' · No. '+escapeHtml(nomor):''}</div>
     <div class="diagram-container" id="diagramContainer">
-      <table class="bagan" id="baganTable">
-        <colgroup>
-          <col style="width:28px;"><col style="width:21%;">
-          ${pelaksanaList.map(()=>'<col>').join('')}
-          <col style="width:10%;"><col style="width:7%;"><col style="width:11%;"><col style="width:7%;">
-        </colgroup>
-        <thead>
-          <tr>
-            <th rowspan="2" class="sub">No</th>
-            <th rowspan="2">Kegiatan</th>
-            <th colspan="${pelaksanaList.length}">Pelaksana</th>
-            <th colspan="3">Mutu Baku</th>
-            <th rowspan="2">Ket</th>
-          </tr>
-          <tr>
-            ${colHeaders}
-            <th class="sub">Kelengkapan</th>
-            <th class="sub">Waktu</th>
-            <th class="sub">Output</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
+      ${tablesHtml.join('')}
     </div>
   `;
 }
